@@ -1,7 +1,7 @@
 
-import { API_BASE_URL, USE_MOCK_API } from '../config';
-import { UserData, Post, EventData, MusicTrack, EventComment, DirectMessage } from '../types';
-import { DEFAULT_UI_TEXTS, EXERCICIOS_DATABASE, RECEITAS_DATABASE, PROFESSIONALS_DATABASE } from '../constants';
+import { API_BASE_URL, USE_MOCK_API } from './../config';
+import { UserData, Post, EventData, MusicTrack, EventComment, DirectMessage } from './../types';
+import { DEFAULT_UI_TEXTS, EXERCICIOS_DATABASE, RECEITAS_DATABASE, PROFESSIONALS_DATABASE } from './../constants';
 
 // Mock Data
 const mockUsers: UserData[] = [

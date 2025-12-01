@@ -1,0 +1,23 @@
+# Dependências
+node_modules/
+npm-debug.log/
+yarn-error.log/
+
+# Diretório de build
+dist/
+.svelte-kit/
+
+# Arquivos de configuração e variáveis de ambiente
+.env
+.env.*
+!.env.example
+
+# Arquivos específicos do sistema operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos de cache
+.cache/
+
+# Arquivos de log
+*.log

@@ -25,21 +25,21 @@ import {
   DEFAULT_CHECKIN_ITEMS,
   PROFESSIONALS_DATABASE,
 } from './constants';
-import NotificationBanner from './src/components/NotificationBanner';
-import { api } from './src/services/api';
-import ImageViewerModal from './src/components/ImageViewerModal';
+import NotificationBanner from './components/NotificationBanner';
+import { api } from './services/api';
+import ImageViewerModal from './components/ImageViewerModal';
 
 // Lazy Load Pages to reduce initial bundle size
-const Dashboard = lazy(() => import('./src/pages/Dashboard'));
-const ProfileViewPage = lazy(() => import('./src/pages/ProfileViewPage'));
-const ChatViewPage = lazy(() => import('./src/pages/ChatViewPage'));
-const LoginPage = lazy(() => import('./src/pages/LoginPage'));
-const RegisterPage = lazy(() => import('./src/pages/RegisterPage'));
-const OnboardingPage = lazy(() => import('./src/pages/OnboardingPage'));
-const RecipeSelectionPage = lazy(() => import('./src/pages/RecipeSelectionPage'));
-const ExerciseSelectionPage = lazy(() => import('./src/pages/ExerciseSelectionPage'));
-const ForgotPasswordPage = lazy(() => import('./src/pages/ForgotPasswordPage'));
-const UpdatePasswordPage = lazy(() => import('./src/pages/UpdatePasswordPage'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const ProfileViewPage = lazy(() => import('./pages/ProfileViewPage'));
+const ChatViewPage = lazy(() => import('./pages/ChatViewPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const OnboardingPage = lazy(() => import('./pages/OnboardingPage'));
+const RecipeSelectionPage = lazy(() => import('./pages/RecipeSelectionPage'));
+const ExerciseSelectionPage = lazy(() => import('./pages/ExerciseSelectionPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const UpdatePasswordPage = lazy(() => import('./pages/UpdatePasswordPage'));
 
 const pageVariants = {
   initial: { opacity: 0 },
