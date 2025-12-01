@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { UserData, RecordedActivity } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { formatTime, formatPace } from '../lib/geolocation';
+import { formatTime, formatPace } from '@lib/geolocation';
 import ActivityDetailPage from './ActivityDetailPage';
 
 interface StatsHubPageProps {

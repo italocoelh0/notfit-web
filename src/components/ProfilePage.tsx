@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { UserData, Post, DashboardSection, RecordedActivity, Badge } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import SettingsMenu from './SettingsMenu';
-import { formatTime, formatPace } from '../lib/geolocation';
+import { formatTime, formatPace } from '@lib/geolocation';
 import { BADGES_DATABASE } from '../constants';
 
 interface ProfilePageProps {

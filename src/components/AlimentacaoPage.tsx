@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Recipe, UITexts, UserData, DashboardSection } from '../types';
 import { AnimatePresence, motion } from 'framer-motion';
 import EditableField from './EditableField';
-import { createManualRoutine } from '../lib/routineService';
+import { createManualRoutine } from '@lib/routineService';
 
 const BLANK_RECIPE: Omit<Recipe, 'id'> = {
     nome: "Nova Receita",

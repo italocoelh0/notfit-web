@@ -25,21 +25,21 @@ import {
   DEFAULT_CHECKIN_ITEMS,
   PROFESSIONALS_DATABASE,
 } from './constants';
-import NotificationBanner from './components/NotificationBanner';
-import { api } from './services/api';
-import ImageViewerModal from './components/ImageViewerModal';
+import NotificationBanner from '@components/NotificationBanner';
+import { api } from '@services/api';
+import ImageViewerModal from '@components/ImageViewerModal';
 
 // Lazy Load Pages to reduce initial bundle size
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const ProfileViewPage = lazy(() => import('./pages/ProfileViewPage'));
-const ChatViewPage = lazy(() => import('./pages/ChatViewPage'));
-const LoginPage = lazy(() => import('./pages/LoginPage'));
-const RegisterPage = lazy(() => import('./pages/RegisterPage'));
-const OnboardingPage = lazy(() => import('./pages/OnboardingPage'));
-const RecipeSelectionPage = lazy(() => import('./pages/RecipeSelectionPage'));
-const ExerciseSelectionPage = lazy(() => import('./pages/ExerciseSelectionPage'));
-const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
-const UpdatePasswordPage = lazy(() => import('./pages/UpdatePasswordPage'));
+const Dashboard = lazy(() => import('@pages/Dashboard'));
+const ProfileViewPage = lazy(() => import('@pages/ProfileViewPage'));
+const ChatViewPage = lazy(() => import('@pages/ChatViewPage'));
+const LoginPage = lazy(() => import('@pages/LoginPage'));
+const RegisterPage = lazy(() => import('@pages/RegisterPage'));
+const OnboardingPage = lazy(() => import('@pages/OnboardingPage'));
+const RecipeSelectionPage = lazy(() => import('@pages/RecipeSelectionPage'));
+const ExerciseSelectionPage = lazy(() => import('@pages/ExerciseSelectionPage'));
+const ForgotPasswordPage = lazy(() => import('@pages/ForgotPasswordPage'));
+const UpdatePasswordPage = lazy(() => import('@pages/UpdatePasswordPage'));
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -922,3 +922,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+

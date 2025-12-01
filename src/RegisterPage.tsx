@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { UITexts } from '../types';
-import EditableField from '../components/EditableField';
+import { UITexts } from '@/types';
+import EditableField from '@components/EditableField';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface RegisterPageProps {
@@ -379,3 +379,4 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onRegister, onNavigateToLog
 };
 
 export default RegisterPage;
+

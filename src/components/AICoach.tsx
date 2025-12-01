@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { UserData, GeneratedPlan, UITexts } from '../types';
-import { getDailyPlan, testGeminiConnection } from '../services/geminiService';
+import { getDailyPlan, testGeminiConnection } from '@services/geminiService';
 import EditableField from './EditableField';
 
 interface AICoachProps {

@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { RecordedActivity } from '../types';
-import { formatTime } from '../lib/geolocation';
+import { formatTime } from '@lib/geolocation';
 
 interface ActivityFinishedPageProps {
   activityData: Omit<RecordedActivity, 'id' | 'date'>;

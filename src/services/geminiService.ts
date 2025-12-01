@@ -44,6 +44,10 @@ export async function getDailyPlan(userData: UserData): Promise<GeneratedPlan> {
 
     const text = response.text;
 
+    if (!text) {
+      throw new Error('Resposta vazia da IA. Tente novamente.');
+    }
+    
     try {
       const plan = JSON.parse(text);
       if (plan.motivation && plan.mealPlan && plan.workout) {

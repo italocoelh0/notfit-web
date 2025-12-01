@@ -1,7 +1,7 @@
 // components/ActivityShareEditor.tsx
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { formatTime, formatPace } from '../lib/geolocation';
+import { formatTime, formatPace } from '@lib/geolocation';
 
 interface ActivityShareEditorProps {
     stats: { distance: number; time: number; pace: number; };
@@ -35,7 +35,10 @@ const ActivityShareEditor: React.FC<ActivityShareEditorProps> = ({ stats, onClos
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
             const reader = new FileReader();
-            reader.onload = (e) => setBackground(e.target.result as string);
+            reader.onload = (e) => {
+                if (e.target?.result)
+                    setBackground(e.target.result as string);
+            }
             reader.readAsDataURL(event.target.files[0]);
         }
     };

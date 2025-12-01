@@ -2,9 +2,9 @@
 // components/ConsultancyPage.tsx
 import React, { useState, useMemo } from 'react';
 import { UserData, Professional, DashboardSection } from '../types';
-import ProfessionalCard from '../components/ProfessionalCard';
-import MyConsultancyDashboard from '../components/MyConsultancyDashboard';
-import ProfessionalPortfolioPage from '../components/ProfessionalPortfolioPage';
+import ProfessionalCard from '@components/ProfessionalCard';
+import MyConsultancyDashboard from '@components/MyConsultancyDashboard';
+import ProfessionalPortfolioPage from '@components/ProfessionalPortfolioPage';
 import { AnimatePresence, motion } from 'framer-motion';
 
 interface ConsultancyPageProps {
@@ -177,3 +177,4 @@ const ConsultancyPage: React.FC<ConsultancyPageProps> = ({
 };
 
 export default ConsultancyPage;
+

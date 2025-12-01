@@ -8,7 +8,7 @@ import {
   Sport,
   Professional,
   Badge,
-} from './types';
+} from '@/types';
 
 export const ADVENTURE_ACTIVITIES = [
   { key: 'trilha', name: 'Trilha', icon: '🌲' },

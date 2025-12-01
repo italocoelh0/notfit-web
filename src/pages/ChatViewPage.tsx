@@ -1,8 +1,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UserData, DirectMessage } from './../types';
-import Avatar from './../components/Avatar';
+import { UserData, DirectMessage } from '../types';
+import Avatar from '../components/Avatar';
 
 interface ChatViewPageProps {
   contact: UserData;

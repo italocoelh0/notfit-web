@@ -1,6 +1,6 @@
 // lib/routineService.ts
 
-import { UserData, Recipe, Exercise, UserRoutine, DailyRoutine, MuscleGroup } from '../types';
+import { UserData, Recipe, Exercise, UserRoutine, DailyRoutine, MuscleGroup } from '@/types';
 
 export const calculateIMC = (weightKg: number, heightCm: number): number => {
   const h = heightCm / 100;

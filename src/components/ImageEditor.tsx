@@ -1,9 +1,9 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { formatTime, formatPace } from '../lib/geolocation';
+import { formatTime, formatPace } from '@lib/geolocation';
 import { MusicTrack } from '../types';
-import { api } from '../services/api';
+import { api } from '@services/api';
 
 interface StatItem {
   id: string;
@@ -556,3 +556,4 @@ const ImageEditor: React.FC<ImageEditorProps> = ({ mode, stats, baseImage, onClo
 };
 
 export default ImageEditor;
+

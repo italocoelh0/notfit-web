@@ -321,7 +321,7 @@ const Dashboard: React.FC<DashboardProps> = props => {
       case 'adminPanel':
         return (
           <AdminPanel
-            onSendNotification={onSendNotification} isEditMode={isEditMode} onToggleEditMode={onToggleEditMode} {...editProps}
+            onSendNotification={onSendNotification} onToggleEditMode={onToggleEditMode} {...editProps}
           />
         );
        case 'flamesStore':

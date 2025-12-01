@@ -31,6 +31,7 @@ export interface Professional {
 export interface ConsultancySubscription {
   professionalId: string;
   startDate: string; // ISO string
+  status: 'pending' | 'active';
 }
 
 export type DashboardSection =
@@ -50,7 +51,10 @@ export type DashboardSection =
   | 'activityTracker'
   | 'consultancy'
   | 'producerPanel'
-  | 'messages';
+  | 'messages'
+  | 'custom_routine'
+  | 'archived'
+  | 'support';
 
 export type MuscleGroup =
   | 'Peito'
@@ -182,6 +186,7 @@ export interface LeaderboardEntry {
 
 export interface Competition {
     id: string;
+	  creatorId: string;					  
     name: string;
     description: string;
     banner: string | null;

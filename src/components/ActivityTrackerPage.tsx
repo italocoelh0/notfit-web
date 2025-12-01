@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GOOGLE_MAPS_API_KEY } from '../config';
-import { haversineDistance, formatTime, formatPace, generateStaticMapUrl } from '../lib/geolocation';
+import { haversineDistance, formatTime, formatPace, generateStaticMapUrl } from '@lib/geolocation';
 import { SPORTS_LIST } from '../constants';
 import { Sport, RecordedActivity } from '../types';
 import ActivityFinishedPage from './ActivityFinishedPage';
