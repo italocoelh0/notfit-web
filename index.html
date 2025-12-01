@@ -1,0 +1,129 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="https://mixqpdnwgbeqwxsnubxx.supabase.co/storage/v1/object/public/logo/582255859_3086579074848471_4873069475124875843_n.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NowFit - Transforme seu corpo e mente</title>
+    <meta name="description" content="App fitness completo com sistema de recompensas Flames. Treinos personalizados, desafios e acompanhamento em tempo real." />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Bebas+Neue&family=Anton&display=swap" rel="stylesheet">
+
+
+    <!-- Tailwind Config -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              bebas: ['"Bebas Neue"', 'sans-serif'],
+              anton: ['Anton', 'sans-serif'],
+            },
+            colors: {
+              background: '#000000',
+              'surface-100': '#1E1E1E',
+              'surface-200': '#282828',
+              'surface-300': '#3E3E3E',
+              'primary': '#FC5200', // Strava Orange
+              'primary-hover': '#E04800',
+              'on-primary': '#FFFFFF',
+              'on-surface': '#FFFFFF',
+              'on-surface-secondary': '#A8A8A8',
+              'flames': '#FF6B35',
+              'flames-glow': '#F7931E',
+            },
+            animation: {
+              'flame-pulse': 'flamePulse 2s ease-in-out infinite',
+              'slide-up': 'slideUp 0.5s ease-out',
+            },
+            keyframes: {
+              flamePulse: {
+                '0%, 100%': { opacity: '1', transform: 'scale(1)' },
+                '50%': { opacity: '0.8', transform: 'scale(1.05)' },
+              },
+              slideUp: {
+                '0%': { opacity: '0', transform: 'translateY(20px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+            },
+          }
+        }
+      }
+    </script>
+
+    <style>
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #1E1E1E;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #FC5200;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #E04800;
+      }
+
+      /* Gradient Text */
+      .gradient-text {
+        background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      /* Flame Glow Effect */
+      .flame-glow {
+        filter: drop-shadow(0 0 12px rgba(255, 107, 53, 0.5));
+      }
+    </style>
+
+    <link rel="stylesheet" href="/index.css">
+
+    <!-- Import Maps -->
+    <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@18.3.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@18.3.1/",
+    "react/": "https://aistudiocdn.com/react@18.3.1/",
+    "framer-motion": "https://aistudiocdn.com/framer-motion@11.2.10",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@0.14.0",
+    "@supabase/supabase-js": "https://aistudiocdn.com/@supabase/supabase-js@2.81.1",
+    "url": "https://aistudiocdn.com/url@^0.11.4",
+    "vite": "https://aistudiocdn.com/vite@^7.2.2",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1",
+    "@nestjs/core": "https://aistudiocdn.com/@nestjs/core@^11.1.9",
+    "@nestjs/passport": "https://aistudiocdn.com/@nestjs/passport@^11.0.5",
+    "@nestjs/common": "https://aistudiocdn.com/@nestjs/common@^11.1.9",
+    "class-validator": "https://aistudiocdn.com/class-validator@^0.14.2",
+    "@prisma/client": "https://aistudiocdn.com/@prisma/client@^7.0.0",
+    "class-transformer": "https://aistudiocdn.com/class-transformer@^0.5.1",
+    "passport-jwt": "https://aistudiocdn.com/passport-jwt@^4.0.1",
+    "bcrypt": "https://aistudiocdn.com/bcrypt@^6.0.0",
+    "src/": "https://aistudiocdn.com/src@^1.1.2/",
+    "@nestjs/jwt": "https://aistudiocdn.com/@nestjs/jwt@^11.0.1",
+    "@nestjs/config": "https://aistudiocdn.com/@nestjs/config@^4.0.2"
+  }
+}
+</script>
+  </head>
+  <body class="bg-background text-on-surface font-sans antialiased">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

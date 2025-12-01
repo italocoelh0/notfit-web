@@ -1,0 +1,9 @@
+{
+  "name": "NowFit",
+  "description": "Um aplicativo de fitness completo para transformar seu corpo com receitas fit personalizadas, treinos funcionais e acompanhamento diário, potencializado por um coach de IA.",
+  "requestFramePermissions": [
+    "geolocation",
+    "microphone",
+    "camera"
+  ]
+}
