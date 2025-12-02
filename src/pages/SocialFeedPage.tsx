@@ -1,14 +1,14 @@
 
 import React, { useState, useRef, useMemo, Suspense, lazy } from 'react';
-import { UserData, Post, UITexts } from '../types';
+import { UserData, Post, UITexts } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
-import PostCard from '../components/PostCard';
-import CommentsModal from '../components/CommentsModal';
-import Avatar from '../components/Avatar';
-import InstagramCamera from '../components/InstagramCamera'; // Importando a nova câmera
+import PostCard from '@components/PostCard';
+import CommentsModal from '@components/CommentsModal';
+import Avatar from '@components/Avatar';
+import InstagramCamera from '@components/InstagramCamera'; // Importando a nova câmera
 
 // Lazy load ImageEditor as it is heavy
-const ImageEditor = lazy(() => import('../components/ImageEditor'));
+const ImageEditor = lazy(() => import('@components/ImageEditor'));
 
 interface EditPostModalProps {
     post: Post;

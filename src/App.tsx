@@ -16,7 +16,7 @@ import {
   Professional,
   RecordedActivity,
   Competition,
-} from './types';
+} from '@/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   EXERCICIOS_DATABASE,
@@ -24,7 +24,7 @@ import {
   DEFAULT_UI_TEXTS,
   DEFAULT_CHECKIN_ITEMS,
   PROFESSIONALS_DATABASE,
-} from './constants';
+} from '@/constants';
 import NotificationBanner from '@components/NotificationBanner';
 import { api } from '@services/api';
 import ImageViewerModal from '@components/ImageViewerModal';

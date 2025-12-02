@@ -68,7 +68,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onNavigateToRegister, on
             playsInline 
             className="w-full h-full object-cover"
           >
-            <source src="https://mixqpdnwgbeqwxsnubxx.supabase.co/storage/v1/object/public/logo/video.mp4" type="video/mp4" />
+            <source src="https://imgur.com/cumtqQ0.mp4" type="video/mp4" />
             Seu navegador não suporta vídeos.
           </video>
        </div>
@@ -91,7 +91,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onNavigateToRegister, on
         <div className="text-center mb-6 w-full">
             <div className="flex justify-center mb-0">
               <Logo
-                src="https://mixqpdnwgbeqwxsnubxx.supabase.co/storage/v1/object/public/logo/582255859_3086579074848471_4873069475124875843_n.png"
+                src="https://imgur.com/6GhoZ4K.png"
                 className="h-[20rem] w-auto drop-shadow-[0_0_25px_rgba(252,82,0,0.4)]"
                 animated={true}
               />

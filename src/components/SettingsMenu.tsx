@@ -1,8 +1,8 @@
 
 import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UserData, DashboardSection } from '../types';
-import { BADGES_DATABASE } from '../constants';
+import { UserData, DashboardSection } from '@/types';
+import { BADGES_DATABASE } from '@/constants';
 
 interface SettingsMenuProps {
   isOpen: boolean;
@@ -148,11 +148,11 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({ isOpen, onClose, userData, 
                     
                     <div className="flex gap-6 mt-5">
                         <div className="flex flex-col">
-                             <span className="text-lg font-anton text-white">{userData.followerIds.length}</span>
+                             <span className="text-lg font-anton text-white">{userData.followerIds?.length ?? 0}</span>
                              <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Seguidores</span>
                         </div>
                         <div className="flex flex-col">
-                             <span className="text-lg font-anton text-white">{userData.followingIds.length}</span>
+                             <span className="text-lg font-anton text-white">{userData.followingIds?.length ?? 0}</span>
                              <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Seguindo</span>
                         </div>
                     </div>

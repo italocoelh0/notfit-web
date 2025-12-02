@@ -9,7 +9,7 @@ interface LogoProps extends React.ImgHTMLAttributes<HTMLImageElement> {
 }
 
 // Usando o novo link do Supabase fornecido para substituir o Google Drive
-const LOGO_URL = 'https://mixqpdnwgbeqwxsnubxx.supabase.co/storage/v1/object/public/logo/582255859_3086579074848471_4873069475124875843_n.png';
+const LOGO_URL = 'https://imgur.com/6GhoZ4K.png';
 
 const sizeClasses: Record<NonNullable<LogoProps['size']>, string> = {
   sm: 'h-8 w-auto',

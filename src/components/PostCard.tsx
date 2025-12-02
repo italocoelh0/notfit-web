@@ -75,9 +75,9 @@ const PostCard: React.FC<PostCardProps> = ({
             {post.imageUrl && (
                 <div className="rounded-xl overflow-hidden border border-white/5 shadow-lg mb-4">
                     <img 
-                        src={post.imageUrl} 
+                        src={post.imageUrl}
                         alt="Post content" 
-                        onClick={() => onViewImage(post.imageUrl!)} 
+                        onClick={() => onViewImage(post.imageUrl as string)} 
                         className="w-full h-auto object-cover max-h-[500px] cursor-pointer" 
                         loading="lazy"
                     />
