@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { EventData, UserData, EventComment } from '../types';
-import { api } from '@services/api';
+import { api } from '../services/api';
 
 const FORBIDDEN_WORDS = [
     'idiota', 'babaca', 'otário', 'trouxa', 'lixo', 'merda', 'bosta', 'caralho', 

@@ -1,4 +1,3 @@
-
 // components/RoutineSelectionPage.tsx
 
 import React from 'react';
@@ -70,6 +69,9 @@ const HubCard: React.FC<{
 const RoutineSelectionPage: React.FC<RoutineSelectionPageProps> = ({
   setActiveSection,
   onSelectMyRoutine,
+  isEditMode,
+  uiTexts,
+  onUpdateUiText,
   isAdmin
 }) => {
   return (

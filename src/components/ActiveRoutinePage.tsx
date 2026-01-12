@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface ActiveRoutinePageProps {
   routine: UserRoutine;
-  onReset?: () => void; // Made optional
+  onReset: () => void;
   viewType?: 'full' | 'workout' | 'diet';
 }
 
@@ -89,16 +89,12 @@ const ActiveRoutinePage: React.FC<ActiveRoutinePageProps> = ({ routine, onReset,
                     Dia {currentDay} <span className="text-white/30 text-lg align-top">/ {routine.duration}</span>
                 </h2>
             </div>
-            
-            {/* Reset Button - Only show if onReset is provided */}
-            {onReset && (
-                <button
-                    onClick={() => setShowResetConfirm(true)}
-                    className="text-xs text-red-500 hover:text-red-400 uppercase tracking-widest font-bold border border-red-500/30 px-3 py-1.5 rounded-lg hover:bg-red-500/10 transition-all"
-                >
-                    Resetar
-                </button>
-            )}
+            <button
+                onClick={() => setShowResetConfirm(true)}
+                className="text-xs text-red-500 hover:text-red-400 uppercase tracking-widest font-bold border border-red-500/30 px-3 py-1.5 rounded-lg hover:bg-red-500/10 transition-all"
+            >
+                Resetar
+            </button>
         </div>
 
         {/* Timeline Scroll */}
@@ -207,7 +203,7 @@ const ActiveRoutinePage: React.FC<ActiveRoutinePageProps> = ({ routine, onReset,
 
       {/* Reset Confirmation Modal */}
       <AnimatePresence>
-        {showResetConfirm && onReset && (
+        {showResetConfirm && (
           <motion.div
             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-6"
             initial={{ opacity: 0 }}

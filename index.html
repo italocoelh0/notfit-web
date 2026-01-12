@@ -3,8 +3,11 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="https://imgur.com/6GhoZ4K.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="https://mixqpdnwgbeqwxsnubxx.supabase.co/storage/v1/object/public/logo/582255859_3086579074848471_4873069475124875843_n.png" />
+    <!-- Viewport fit cover for notch support, user-scalable=no for app feel -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>NowFit - Transforme seu corpo e mente</title>
     <meta name="description" content="App fitness completo com sistema de recompensas Flames. Treinos personalizados, desafios e acompanhamento em tempo real." />
 
@@ -17,8 +20,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Bebas+Neue&family=Anton&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Bebas+Neue&family=Anton&family=Lobster&family=Pacifico&family=Oswald:wght@400;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 
     <!-- Tailwind Config -->
     <script>
@@ -77,53 +79,73 @@
       ::-webkit-scrollbar-thumb:hover {
         background: #E04800;
       }
-
-      /* Gradient Text */
       .gradient-text {
         background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
       }
-
-      /* Flame Glow Effect */
       .flame-glow {
         filter: drop-shadow(0 0 12px rgba(255, 107, 53, 0.5));
       }
+
+      /* Mobile App Optimizations */
+      body {
+        -webkit-tap-highlight-color: transparent;
+        -webkit-user-select: none;
+        user-select: none;
+        overscroll-behavior-y: none; /* Prevents pull-to-refresh on mobile web */
+      }
+
+      input, textarea {
+        -webkit-user-select: text;
+        user-select: text;
+      }
+
+      /* Safe Area Utilities */
+      .pt-safe {
+        padding-top: env(safe-area-inset-top);
+      }
+      .pb-safe {
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      .h-safe-screen {
+        height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+      }
+      .min-h-safe-screen {
+        min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+      }
     </style>
-
-    <link rel="stylesheet" href="/index.css">
-
-    <!-- Import Maps -->
-    <script type="importmap">
+  <script type="importmap">
 {
   "imports": {
-    "react": "https://aistudiocdn.com/react@18.3.1",
-    "react-dom/": "https://aistudiocdn.com/react-dom@18.3.1/",
-    "react/": "https://aistudiocdn.com/react@18.3.1/",
-    "framer-motion": "https://aistudiocdn.com/framer-motion@11.2.10",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@0.14.0",
-    "@supabase/supabase-js": "https://aistudiocdn.com/@supabase/supabase-js@2.81.1",
-    "url": "https://aistudiocdn.com/url@^0.11.4",
-    "vite": "https://aistudiocdn.com/vite@^7.2.2",
-    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1",
-    "@nestjs/core": "https://aistudiocdn.com/@nestjs/core@^11.1.9",
-    "@nestjs/passport": "https://aistudiocdn.com/@nestjs/passport@^11.0.5",
-    "@nestjs/common": "https://aistudiocdn.com/@nestjs/common@^11.1.9",
-    "class-validator": "https://aistudiocdn.com/class-validator@^0.14.2",
-    "@prisma/client": "https://aistudiocdn.com/@prisma/client@^7.0.0",
-    "class-transformer": "https://aistudiocdn.com/class-transformer@^0.5.1",
-    "passport-jwt": "https://aistudiocdn.com/passport-jwt@^4.0.1",
-    "bcrypt": "https://aistudiocdn.com/bcrypt@^6.0.0",
-    "src/": "https://aistudiocdn.com/src@^1.1.2/",
-    "@nestjs/jwt": "https://aistudiocdn.com/@nestjs/jwt@^11.0.1",
-    "@nestjs/config": "https://aistudiocdn.com/@nestjs/config@^4.0.2"
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "framer-motion": "https://esm.sh/framer-motion@^12.23.26",
+    "vite": "https://esm.sh/vite@^7.2.7",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "@google/genai": "https://esm.sh/@google/genai@^1.33.0",
+    "url": "https://esm.sh/url@^0.11.4",
+    "@nestjs/core": "https://esm.sh/@nestjs/core@^11.1.9",
+    "@prisma/client": "https://esm.sh/@prisma/client@^7.1.0",
+    "@nestjs/common": "https://esm.sh/@nestjs/common@^11.1.9",
+    "@nestjs/config": "https://esm.sh/@nestjs/config@^4.0.2",
+    "bcrypt": "https://esm.sh/bcrypt@^6.0.0",
+    "src/": "https://esm.sh/src@^1.1.2/",
+    "@nestjs/jwt": "https://esm.sh/@nestjs/jwt@^11.0.2",
+    "passport-jwt": "https://esm.sh/passport-jwt@^4.0.1",
+    "class-transformer": "https://esm.sh/class-transformer@^0.5.1",
+    "class-validator": "https://esm.sh/class-validator@^0.14.3",
+    "@nestjs/passport": "https://esm.sh/@nestjs/passport@^11.0.5",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.90.1"
   }
 }
 </script>
-  </head>
+<link rel="stylesheet" href="/index.css">
+</head>
   <body class="bg-background text-on-surface font-sans antialiased">
     <div id="root"></div>
-    <script type="module" src="src/index.tsx"></script>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

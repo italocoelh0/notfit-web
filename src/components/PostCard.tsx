@@ -34,34 +34,47 @@ const PostCard: React.FC<PostCardProps> = ({
     const [optionsOpen, setOptionsOpen] = useState(false);
 
     return (
-        <div className="bg-surface-100 p-4 rounded-2xl border border-white/5 shadow-sm mb-4">
+        <div className="bg-surface-100 rounded-3xl border border-white/5 shadow-lg mb-6 overflow-hidden">
             {/* Header */}
-            <div className="flex justify-between items-start mb-3">
+            <div className="flex justify-between items-center p-4">
                 <div className="flex items-center gap-3 cursor-pointer group" onClick={() => onViewProfile(post.userId)}>
-                    <Avatar src={post.userAvatar} alt={post.userName} size="md" className="border-2 border-transparent group-hover:border-primary transition-colors" />
+                    <Avatar src={post.userAvatar} alt={post.userName} size="md" className="ring-2 ring-transparent group-hover:ring-primary/50 transition-all" />
                     <div>
-                        <p className="font-bold text-sm flex items-center text-white group-hover:text-primary transition-colors">
+                        <p className="font-bold text-sm text-white group-hover:text-primary transition-colors leading-tight">
                             {post.userName} 
-                            {post.authorIsVerified && <i className="fa-solid fa-circle-check text-blue-400 text-xs ml-1"></i>}
+                            {post.authorIsVerified && <i className="fa-solid fa-circle-check text-blue-500 text-[10px] ml-1 align-middle"></i>}
                         </p>
-                        <p className="text-[10px] text-on-surface-secondary font-medium">@{post.username} · {post.timestamp}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                            {post.locationName && (
+                                <span className="text-[9px] text-primary font-bold flex items-center gap-0.5">
+                                    <i className="fa-solid fa-location-dot"></i>
+                                    {post.locationName}
+                                </span>
+                            )}
+                            {post.locationName && <span className="text-gray-700 text-[8px]">•</span>}
+                            <p className="text-[9px] text-gray-500 font-medium">{post.timestamp}</p>
+                        </div>
                     </div>
                 </div>
                 {post.userId === currentUser.id && (
                     <div className="relative">
-                        <button onClick={() => setOptionsOpen(!optionsOpen)} className="text-on-surface-secondary hover:text-white p-2">
+                        <button onClick={() => setOptionsOpen(!optionsOpen)} className="text-gray-500 hover:text-white p-2 transition-colors">
                             <i className="fa-solid fa-ellipsis"></i>
                         </button>
                         <AnimatePresence>
                             {optionsOpen && (
                                 <motion.div 
-                                    initial={{ opacity: 0, y: -5, scale: 0.95 }} 
+                                    initial={{ opacity: 0, y: 10, scale: 0.95 }} 
                                     animate={{ opacity: 1, y: 0, scale: 1 }} 
-                                    exit={{ opacity: 0, y: -5, scale: 0.95 }} 
-                                    className="absolute right-0 mt-1 w-32 bg-surface-200 rounded-xl border border-white/10 shadow-xl z-10 overflow-hidden"
+                                    exit={{ opacity: 0, y: 10, scale: 0.95 }} 
+                                    className="absolute right-0 top-full mt-1 w-32 bg-surface-200 rounded-xl border border-white/10 shadow-2xl z-20 overflow-hidden"
                                 >
-                                    <button onClick={() => { onEdit(post); setOptionsOpen(false); }} className="w-full text-left px-4 py-3 text-xs font-bold text-white hover:bg-white/10 transition-colors">Editar</button>
-                                    <button onClick={() => { onDelete(post.id); setOptionsOpen(false); }} className="w-full text-left px-4 py-3 text-xs font-bold text-red-500 hover:bg-white/10 transition-colors">Deletar</button>
+                                    <button onClick={() => { onEdit(post); setOptionsOpen(false); }} className="w-full text-left px-4 py-3 text-xs font-bold text-white hover:bg-white/10 transition-colors flex items-center gap-2">
+                                        <i className="fa-solid fa-pen"></i> Editar
+                                    </button>
+                                    <button onClick={() => { onDelete(post.id); setOptionsOpen(false); }} className="w-full text-left px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-500/10 transition-colors flex items-center gap-2">
+                                        <i className="fa-solid fa-trash"></i> Excluir
+                                    </button>
                                 </motion.div>
                             )}
                         </AnimatePresence>
@@ -69,52 +82,60 @@ const PostCard: React.FC<PostCardProps> = ({
                 )}
             </div>
 
-            {/* Content */}
-            <p className="my-3 text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">{post.content}</p>
-            
+            {/* Media */}
             {post.imageUrl && (
-                <div className="rounded-xl overflow-hidden border border-white/5 shadow-lg mb-4">
+                <div className="w-full bg-black">
                     <img 
-                        src={post.imageUrl}
+                        src={post.imageUrl} 
                         alt="Post content" 
-                        onClick={() => onViewImage(post.imageUrl as string)} 
-                        className="w-full h-auto object-cover max-h-[500px] cursor-pointer" 
+                        onClick={() => onViewImage(post.imageUrl!)} 
+                        className="w-full h-auto object-cover max-h-[600px] cursor-pointer" 
                         loading="lazy"
                     />
                 </div>
             )}
 
-            {/* Actions */}
-            <div className="flex justify-between items-center pt-2 border-t border-white/5">
-                <div className="flex gap-6">
+            {/* Content Text (if any) */}
+            {post.content && (
+                <div className="px-4 py-3">
+                     <p className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">
+                         <span className="font-bold text-white mr-1">{post.username}</span>
+                         {post.content}
+                     </p>
+                </div>
+            )}
+
+            {/* Actions Bar */}
+            <div className="px-4 pb-4 flex justify-between items-center">
+                <div className="flex gap-4">
                     <button 
                         onClick={() => onLike(post.id)} 
-                        className={`flex items-center gap-2 text-sm font-medium transition-all ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
+                        className="group flex flex-col items-center justify-center gap-0.5"
                     >
-                        <i className={`${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart text-lg`}></i> 
-                        <span>{post.likedByUserIds.length}</span>
+                        <i className={`${isLiked ? 'fa-solid text-red-500' : 'fa-regular text-white group-hover:text-gray-300'} fa-heart text-xl transition-all ${isLiked ? 'scale-110' : ''}`}></i>
+                        {post.likedByUserIds.length > 0 && <span className="text-[10px] font-bold text-gray-400">{post.likedByUserIds.length}</span>}
                     </button>
                     
                     <button 
                         onClick={() => onOpenComments(post)}
-                        className="flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-white transition-all"
+                        className="group flex flex-col items-center justify-center gap-0.5"
                     >
-                        <i className="fa-regular fa-comment text-lg"></i> 
-                        <span>{post.comments.length}</span>
+                        <i className="fa-regular fa-comment text-white group-hover:text-gray-300 text-xl transition-colors"></i>
+                        {post.comments.length > 0 && <span className="text-[10px] font-bold text-gray-400">{post.comments.length}</span>}
                     </button>
 
                     <button 
                         onClick={() => !isFlamed && onGiveFlameTrigger(post)} 
                         disabled={isFlamed || post.userId === currentUser.id}
-                        className={`flex items-center gap-2 text-sm font-medium transition-all ${isFlamed ? 'text-primary cursor-default' : 'text-gray-400 hover:text-primary'}`}
+                        className={`group flex flex-col items-center justify-center gap-0.5 ${isFlamed ? 'opacity-100' : 'opacity-80'}`}
                         title="Doar Flame"
                     >
-                        <i className={`fa-solid fa-fire text-lg ${isFlamed ? 'animate-pulse' : ''}`}></i> 
-                        <span>{post.flamedByUserIds.length}</span>
+                        <i className={`fa-solid fa-fire text-xl transition-all ${isFlamed ? 'text-primary scale-110 drop-shadow-[0_0_8px_rgba(252,82,0,0.6)]' : 'text-white group-hover:text-primary'}`}></i>
+                        {post.flamedByUserIds.length > 0 && <span className="text-[10px] font-bold text-gray-400">{post.flamedByUserIds.length}</span>}
                     </button>
                 </div>
 
-                <button onClick={() => onShare(post)} className="text-gray-400 hover:text-white transition-all">
+                <button onClick={() => onShare(post)} className="text-white hover:text-gray-300 transition-colors">
                     <i className="fa-solid fa-share-nodes text-lg"></i>
                 </button>
             </div>

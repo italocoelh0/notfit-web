@@ -1,9 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { formatTime, formatPace } from '@lib/geolocation';
-import { MusicTrack } from '../types';
-import { api } from '@services/api';
+import { formatTime, formatPace } from '../lib/geolocation';
 
 interface StatItem {
   id: string;
@@ -14,17 +12,20 @@ interface StatItem {
 interface TextItem {
   id: string;
   text: string;
-  font: 'font-anton' | 'font-bebas' | 'font-sans';
+  font: string; // Changed to string to support dynamic fonts
   color: string;
   backgroundColor?: string;
   textStyle: 'none' | 'fill' | 'neon';
   fontSize: number;
   align: 'left' | 'center' | 'right';
+  rotation: number;
+  scale: number;
 }
 
-interface MusicItem {
+interface ActivitySticker {
     id: string;
-    track: MusicTrack;
+    stats: { distance: number; time: number; pace: number };
+    variant: 'glass' | 'minimal' | 'orange';
 }
 
 interface LocationItem {
@@ -35,7 +36,7 @@ interface LocationItem {
 type EditorElementData = 
   | (StatItem & { type: 'stat' }) 
   | (TextItem & { type: 'text' })
-  | (MusicItem & { type: 'music' })
+  | (ActivitySticker & { type: 'activity-sticker' })
   | (LocationItem & { type: 'location' });
 
 type EditorElement = EditorElementData & { position: { x: number; y: number } };
@@ -52,9 +53,13 @@ interface ImageEditorProps {
 // --- Constants ---
 
 const FONTS = [
-    { id: 'font-sans', label: 'Clássico', family: 'Inter' },
     { id: 'font-anton', label: 'Moderno', family: 'Anton' },
     { id: 'font-bebas', label: 'Forte', family: '"Bebas Neue"' },
+    { id: 'font-sans', label: 'Clássico', family: 'Inter' },
+    { id: 'font-lobster', label: 'Cursiva', family: 'Lobster' },
+    { id: 'font-pacifico', label: 'Brush', family: 'Pacifico' },
+    { id: 'font-oswald', label: 'Condensado', family: 'Oswald' },
+    { id: 'font-orbitron', label: 'Tech', family: 'Orbitron' },
 ];
 
 const COLORS = [
@@ -70,32 +75,121 @@ const FILTERS = [
     { name: 'Cyber', filter: 'saturate(2) hue-rotate(10deg)' },
 ];
 
-// --- Helper Functions ---
-function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
-  ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.lineTo(x + width - radius, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-  ctx.lineTo(x + width, y + height - radius);
-  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-  ctx.lineTo(x + radius, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-  ctx.lineTo(x, y + radius);
-  ctx.quadraticCurveTo(x, y, x + radius, y);
-  ctx.closePath();
-}
-
 // --- Sub-Components ---
 
 const DraggableItem: React.FC<{
   item: EditorElement;
-  onUpdatePosition: (id: string, offset: { x: number; y: number }) => void;
+  onUpdate: (id: string, updates: Partial<EditorElement>) => void;
   onSelect: (item: EditorElement | null) => void;
   isSelected: boolean;
   onEdit: () => void;
-  onResize: (id: string, delta: number) => void;
-}> = ({ item, onUpdatePosition, onSelect, isSelected, onEdit, onResize }) => {
+}> = ({ item, onUpdate, onSelect, isSelected, onEdit }) => {
+  const elementRef = useRef<HTMLDivElement>(null);
   
+  // Use refs for tracking to avoid re-renders during high-frequency drag events
+  const touchState = useRef({
+      dist: 0,
+      angle: 0,
+      startX: 0,
+      startY: 0,
+      startPosX: 0,
+      startPosY: 0,
+      startRotation: 0,
+      startScale: 1,
+      isGesture: false,
+      lastX: item.position.x,
+      lastY: item.position.y
+  });
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+      e.stopPropagation();
+      onSelect(item);
+      
+      const touch = e.touches[0];
+      
+      if (e.touches.length === 1) {
+          touchState.current.isGesture = false;
+          touchState.current.startX = touch.clientX;
+          touchState.current.startY = touch.clientY;
+          touchState.current.startPosX = item.position.x;
+          touchState.current.startPosY = item.position.y;
+          touchState.current.lastX = item.position.x;
+          touchState.current.lastY = item.position.y;
+      } else if (e.touches.length === 2) {
+          touchState.current.isGesture = true;
+          const dx = e.touches[0].clientX - e.touches[1].clientX;
+          const dy = e.touches[0].clientY - e.touches[1].clientY;
+          touchState.current.dist = Math.sqrt(dx * dx + dy * dy);
+          touchState.current.angle = Math.atan2(dy, dx) * (180 / Math.PI);
+          
+          if(item.type === 'text') {
+              touchState.current.startRotation = (item as TextItem).rotation;
+              touchState.current.startScale = (item as TextItem).scale;
+          }
+      }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (e.touches.length === 1 && !touchState.current.isGesture) {
+          // DIRECT DOM MANIPULATION
+          const dx = e.touches[0].clientX - touchState.current.startX;
+          const dy = e.touches[0].clientY - touchState.current.startY;
+          
+          const newX = touchState.current.startPosX + dx;
+          const newY = touchState.current.startPosY + dy;
+          
+          touchState.current.lastX = newX;
+          touchState.current.lastY = newY;
+
+          if (elementRef.current) {
+              elementRef.current.style.left = `${newX}px`;
+              elementRef.current.style.top = `${newY}px`;
+          }
+      } else if (e.touches.length === 2) {
+          // Gestures
+          const dx = e.touches[0].clientX - e.touches[1].clientX;
+          const dy = e.touches[0].clientY - e.touches[1].clientY;
+          const newDist = Math.sqrt(dx * dx + dy * dy);
+          const newAngle = Math.atan2(dy, dx) * (180 / Math.PI);
+          
+          if(item.type === 'text') {
+              const scaleDelta = newDist / touchState.current.dist;
+              const angleDelta = newAngle - touchState.current.angle;
+              
+              onUpdate(item.id, {
+                  scale: Math.max(0.5, Math.min(3.0, touchState.current.startScale * scaleDelta)),
+                  rotation: touchState.current.startRotation + angleDelta
+              });
+          }
+      }
+  };
+
+  const handleTouchEnd = () => {
+      if (!touchState.current.isGesture) {
+          if (touchState.current.lastX !== touchState.current.startPosX || 
+              touchState.current.lastY !== touchState.current.startPosY) {
+              onUpdate(item.id, { 
+                  position: { 
+                      x: touchState.current.lastX, 
+                      y: touchState.current.lastY 
+                  } 
+              });
+          }
+      }
+      touchState.current.isGesture = false;
+  }
+
+  const toggleStickerVariant = () => {
+      if (item.type !== 'activity-sticker') return;
+      const variants: ('glass' | 'minimal' | 'orange')[] = ['glass', 'minimal', 'orange'];
+      const currentIndex = variants.indexOf((item as ActivitySticker).variant);
+      const nextVariant = variants[(currentIndex + 1) % variants.length];
+      onUpdate(item.id, { variant: nextVariant } as any);
+  };
+
   const renderTextContent = (t: TextItem) => {
       const isFill = t.textStyle === 'fill';
       const isNeon = t.textStyle === 'neon';
@@ -103,12 +197,13 @@ const DraggableItem: React.FC<{
           color: isFill ? (t.color === '#FFFFFF' ? '#000000' : '#FFFFFF') : t.color,
           fontSize: `${t.fontSize}px`,
           textAlign: t.align,
-          lineHeight: 1.4,
+          lineHeight: 1.2,
           textShadow: isNeon ? `0 0 10px ${t.color}, 0 0 20px ${t.color}` : 'none',
           fontFamily: FONTS.find(f => f.id === t.font)?.family,
-          fontWeight: 'bold',
+          fontWeight: 'normal', // Changed to normal to let fonts handle their own weight
           whiteSpace: 'pre-wrap',
           wordBreak: 'break-word',
+          pointerEvents: 'none',
       };
       const containerStyle: React.CSSProperties = {
           backgroundColor: isFill ? t.color : 'transparent',
@@ -120,217 +215,190 @@ const DraggableItem: React.FC<{
       return <div style={containerStyle}><div style={baseStyle}>{t.text}</div></div>;
   };
 
+  const renderActivitySticker = (s: ActivitySticker) => {
+      const { distance, time, pace } = s.stats;
+      
+      if (s.variant === 'minimal') {
+          return (
+              <div className="flex flex-col items-center select-none" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+                  <div className="flex items-baseline gap-1">
+                      <span className="text-5xl font-anton text-white">{distance.toFixed(2)}</span>
+                      <span className="text-sm font-bold text-primary uppercase">km</span>
+                  </div>
+                  <div className="flex gap-4 text-white/90 font-bold text-sm">
+                      <span>{formatTime(time)}</span>
+                      <span>{formatPace(pace)} /km</span>
+                  </div>
+              </div>
+          );
+      }
+
+      const bgClass = s.variant === 'orange' 
+          ? 'bg-gradient-to-br from-primary to-orange-600 border-primary/50' 
+          : 'bg-black/40 backdrop-blur-md border-white/10';
+
+      const textClass = 'text-white';
+      const labelClass = 'text-white/60';
+
+      return (
+          <div className={`p-4 rounded-2xl border flex gap-4 items-center shadow-xl select-none ${bgClass}`}>
+               <div className="flex flex-col items-center border-r border-white/10 pr-4">
+                   <i className="fa-solid fa-person-running text-2xl mb-1 text-white"></i>
+                   <span className="text-[10px] font-bold uppercase tracking-wider text-white">Run</span>
+               </div>
+               <div className="flex gap-4">
+                   <div>
+                       <p className={`text-2xl font-anton ${textClass}`}>{distance.toFixed(2)}</p>
+                       <p className={`text-[10px] uppercase font-bold ${labelClass}`}>km</p>
+                   </div>
+                   <div>
+                       <p className={`text-2xl font-anton ${textClass}`}>{formatTime(time)}</p>
+                       <p className={`text-[10px] uppercase font-bold ${labelClass}`}>Tempo</p>
+                   </div>
+                   <div>
+                       <p className={`text-2xl font-anton ${textClass}`}>{formatPace(pace)}</p>
+                       <p className={`text-[10px] uppercase font-bold ${labelClass}`}>Pace</p>
+                   </div>
+               </div>
+          </div>
+      );
+  };
+
+  const rotation = item.type === 'text' ? item.rotation : 0;
+  const scale = item.type === 'text' ? item.scale : 1;
+
   return (
-    <motion.div
-      drag
-      dragMomentum={false}
-      onDragEnd={(_, info) => onUpdatePosition(item.id, info.offset)}
+    <div
+      ref={elementRef}
       style={{
         position: 'absolute',
         left: item.position.x,
         top: item.position.y,
         zIndex: isSelected ? 50 : 10,
+        transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(${scale})`,
+        touchAction: 'none',
+        width: 'max-content',
+        cursor: 'move'
       }}
-      animate={{ scale: isSelected ? 1.02 : 1 }}
-      className={`cursor-grab active:cursor-grabbing touch-none ${isSelected ? 'ring-1 ring-white/50 rounded-lg' : ''}`}
-      onTap={(e) => { e.stopPropagation(); onSelect(item); }}
+      className={`select-none ${isSelected && item.type !== 'text' ? 'ring-1 ring-white/50 rounded-lg' : ''}`}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onClick={(e) => { 
+          e.stopPropagation(); 
+          if (item.type === 'activity-sticker') toggleStickerVariant();
+          onSelect(item); 
+      }}
       onDoubleClick={(e) => { e.stopPropagation(); onEdit(); }}
     >
-      {isSelected && item.type === 'text' && (
-          <motion.div
-              className="absolute -bottom-3 -right-3 w-6 h-6 bg-white text-black rounded-full shadow-md border border-gray-300 flex items-center justify-center z-[60] cursor-nwse-resize"
-              drag dragMomentum={false} dragElastic={0} dragConstraints={{ top: 0, left: 0, right: 0, bottom: 0 }}
-              onDrag={(_, info) => onResize(item.id, info.delta.x + info.delta.y)}
-              onPointerDown={(e) => e.stopPropagation()}
-          >
-              <i className="fa-solid fa-expand text-[10px]"></i>
-          </motion.div>
-      )}
       {item.type === 'stat' && (
-        <div className="text-center p-2 select-none text-white">
+        <div className="text-center p-2 select-none text-white pointer-events-none">
             <p className="text-5xl font-bold font-bebas">{item.value}</p>
             <p className="text-lg uppercase tracking-wider font-sans font-bold">{item.label}</p>
         </div>
       )}
-      {item.type === 'text' && <div className="select-none">{renderTextContent(item)}</div>}
-      {item.type === 'music' && (
-          <div className="bg-black/40 backdrop-blur-md rounded-xl p-2 pr-4 flex items-center gap-3 border border-white/10 shadow-2xl select-none">
-              <img src={item.track.albumArt} alt="Album" className="w-10 h-10 rounded-lg pointer-events-none" />
-              <div className="pointer-events-none">
-                  <p className="text-white font-bold text-sm whitespace-nowrap">{item.track.name}</p>
-                  <p className="text-white/70 text-xs whitespace-nowrap">{item.track.artist}</p>
-              </div>
-              <div className="text-[#1DB954] text-lg ml-1 pointer-events-none"><i className="fa-brands fa-spotify"></i></div>
-          </div>
-      )}
-      {item.type === 'location' && (
-          <div className="bg-white/90 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2 shadow-lg select-none group">
-              <div className="text-red-500 text-lg"><i className="fa-solid fa-location-dot"></i></div>
-              <p className="text-black font-bold text-sm font-sans uppercase tracking-wide whitespace-nowrap">{item.text}</p>
-          </div>
-      )}
-    </motion.div>
+      {item.type === 'text' && renderTextContent(item as TextItem)}
+      {item.type === 'activity-sticker' && renderActivitySticker(item as ActivitySticker)}
+    </div>
   );
 };
 
-// --- Text Editor Overlay ---
-interface TextEditingOverlayProps {
+// --- WYSIWYG Text Editor Overlay ---
+interface TextEditorOverlayProps {
     initialText: string;
     initialColor: string;
     initialFont: string;
     initialStyle: 'none' | 'fill' | 'neon';
-    initialSize: number;
     initialAlign: 'left' | 'center' | 'right';
-    onDone: (text: string, color: string, font: string, style: 'none' | 'fill' | 'neon', size: number, align: 'left' | 'center' | 'right') => void;
-    onCancel: () => void;
+    onDone: (text: string, color: string, font: string, style: 'none' | 'fill' | 'neon', align: 'left' | 'center' | 'right') => void;
 }
 
-const TextEditingOverlay: React.FC<TextEditingOverlayProps> = (props) => {
-    const [text, setText] = useState(props.initialText);
-    const [color, setColor] = useState(props.initialColor);
-    const [font, setFont] = useState(props.initialFont);
-    const [style, setStyle] = useState(props.initialStyle);
-    const [size, setSize] = useState(props.initialSize);
-    const [align, setAlign] = useState(props.initialAlign);
-    const [showColorPicker, setShowColorPicker] = useState(false);
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-    useEffect(() => {
-        if (textareaRef.current) {
-            textareaRef.current.focus();
-            textareaRef.current.setSelectionRange(text.length, text.length);
-            textareaRef.current.style.height = 'auto';
-            textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
-        }
-    }, []);
-
+const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({ initialText, initialColor, initialFont, initialStyle, initialAlign, onDone }) => {
+    const [text, setText] = useState(initialText);
+    const [color, setColor] = useState(initialColor);
+    const [font, setFont] = useState(initialFont);
+    const [style, setStyle] = useState(initialStyle);
+    const [align, setAlign] = useState(initialAlign);
+    
+    // UI Helpers
     const toggleStyle = () => style === 'none' ? setStyle('fill') : style === 'fill' ? setStyle('neon') : setStyle('none');
     const toggleAlign = () => align === 'center' ? setAlign('left') : align === 'left' ? setAlign('right') : setAlign('center');
+    
+    // Preview Styles
     const isFill = style === 'fill';
     const isNeon = style === 'neon';
-
     const previewStyle: React.CSSProperties = {
         color: isFill ? (color === '#FFFFFF' ? '#000000' : '#FFFFFF') : color,
         fontFamily: FONTS.find(f => f.id === font)?.family,
-        fontSize: `${size}px`,
+        fontSize: `32px`, 
         textAlign: align,
         textShadow: isNeon ? `0 0 10px ${color}, 0 0 20px ${color}` : 'none',
-        lineHeight: 1.4,
-        fontWeight: 'bold',
-    };
-    const wrapperStyle: React.CSSProperties = {
+        fontWeight: 'normal',
         backgroundColor: isFill ? color : 'transparent',
         padding: isFill ? '8px 16px' : '0',
         borderRadius: '12px',
-        display: 'inline-block',
-        minWidth: '20px',
+        width: 'auto',
+        minWidth: '50px'
     };
 
     return (
-        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col">
-            <div className="flex justify-between items-center p-4 pt-safe relative z-50">
+        <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex flex-col">
+            {/* Top Bar */}
+            <div className="flex justify-between items-center p-4 pt-safe">
                 <div className="flex gap-4">
-                    <button onClick={toggleAlign} className="w-10 h-10 flex items-center justify-center text-white border border-white/30 rounded-full hover:bg-white/10 transition-colors">
-                        <i className={`fa-solid fa-align-${align} text-lg`}></i>
-                    </button>
-                    <button onClick={toggleStyle} className="w-10 h-10 flex items-center justify-center text-white border border-white/30 rounded-full hover:bg-white/10 transition-colors relative">
-                        <span className="font-serif font-bold text-lg">A</span>
-                    </button>
-                    <div className="relative">
-                        <button onClick={() => setShowColorPicker(!showColorPicker)} className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-white/50 transition-colors" style={{ backgroundColor: color }} />
-                        <AnimatePresence>
-                            {showColorPicker && (
-                                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute top-full left-0 mt-4 bg-surface-100/90 backdrop-blur-xl p-3 rounded-2xl border border-white/10 shadow-2xl grid grid-cols-3 gap-3 w-max">
-                                    {COLORS.map(c => <button key={c} onClick={() => { setColor(c); setShowColorPicker(false); }} className={`w-8 h-8 rounded-full border-2 ${color === c ? 'border-white' : 'border-white/10'}`} style={{ backgroundColor: c }} />)}
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
+                    <button onClick={toggleAlign} className="w-10 h-10 flex items-center justify-center text-white border border-white/30 rounded-full"><i className={`fa-solid fa-align-${align}`}></i></button>
+                    <button onClick={toggleStyle} className="w-10 h-10 flex items-center justify-center text-white border border-white/30 rounded-full font-serif font-bold">A</button>
                 </div>
-                <button onClick={() => props.onDone(text, color, font, style, size, align)} className="text-white font-bold text-lg hover:text-primary px-2">Concluir</button>
+                <button onClick={() => onDone(text, color, font, style, align)} className="text-white font-bold text-lg">Concluir</button>
             </div>
-            <div className="flex-1 flex items-center justify-center relative w-full px-4 overflow-hidden" onClick={() => setShowColorPicker(false)}>
-                <div className="absolute left-6 top-1/2 -translate-y-1/2 flex items-center justify-center h-64 w-8 z-40">
-                    <input type="range" min="16" max="150" value={size} onChange={(e) => setSize(Number(e.target.value))} className="h-full -rotate-180 appearance-none bg-white/20 rounded-full cursor-pointer" style={{ writingMode: 'vertical-lr', direction: 'rtl', width: '6px' }} />
-                </div>
-                <div className="w-full flex flex-col items-center z-10">
-                    <div style={{ width: '100%', textAlign: align }}>
-                        <span style={wrapperStyle}>
-                            <textarea ref={textareaRef} value={text} onChange={e => { setText(e.target.value); e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }} className="bg-transparent border-none outline-none resize-none overflow-hidden p-0 m-0 block" style={{ ...previewStyle, minWidth: '1em', width: '100%', height: 'auto' }} rows={1} spellCheck={false} />
-                        </span>
-                    </div>
-                </div>
+
+            {/* Input Area (Centered) */}
+            <div className="flex-1 flex items-center justify-center px-4">
+                <textarea
+                    autoFocus
+                    value={text}
+                    onChange={e => setText(e.target.value)}
+                    className="bg-transparent border-none outline-none resize-none overflow-hidden"
+                    style={previewStyle}
+                    rows={Math.max(1, text.split('\n').length)}
+                />
             </div>
-            <div className="pb-safe" onClick={() => setShowColorPicker(false)}>
-                <div className="p-4 bg-gradient-to-t from-black to-transparent">
-                    <div className="flex gap-4 justify-center overflow-x-auto pb-4 hide-scrollbar items-center">
-                        {FONTS.map(f => (
-                            <button key={f.id} onClick={() => setFont(f.id as any)} className={`w-12 h-12 rounded-full bg-white/10 border-2 flex items-center justify-center text-sm text-white font-bold ${font === f.id ? 'border-white bg-white/20 scale-110' : 'border-transparent text-gray-400'}`} style={{ fontFamily: f.family }}>Aa</button>
-                        ))}
-                    </div>
+
+            {/* Bottom Controls */}
+            <div className="pb-safe">
+                {/* Font Selector */}
+                <div className="flex gap-4 justify-start overflow-x-auto p-4 hide-scrollbar">
+                    {FONTS.map(f => (
+                        <button key={f.id} onClick={() => setFont(f.id)} className={`flex-shrink-0 w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white font-bold ${font === f.id ? 'ring-2 ring-white bg-white/20' : ''}`} style={{ fontFamily: f.family }}>Aa</button>
+                    ))}
+                </div>
+                {/* Color Picker */}
+                <div className="flex gap-3 justify-start overflow-x-auto p-4 pt-0 hide-scrollbar">
+                    {COLORS.map(c => (
+                        <button key={c} onClick={() => setColor(c)} className={`w-8 h-8 rounded-full border-2 flex-shrink-0 ${color === c ? 'border-white scale-110' : 'border-transparent'}`} style={{ backgroundColor: c }} />
+                    ))}
                 </div>
             </div>
         </div>
     );
 };
 
-const SpotifyModal: React.FC<{ onClose: () => void; onSelect: (track: MusicTrack) => void }> = ({ onClose, onSelect }) => {
-    const [search, setSearch] = useState('');
-    const [tracks, setTracks] = useState<MusicTrack[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-
-    useEffect(() => {
-        const delayDebounceFn = setTimeout(async () => {
-            if (search.trim().length > 0) {
-                setIsLoading(true);
-                try {
-                    const results = await api.music.search(search);
-                    setTracks(results);
-                } catch (error) { console.error(error); } finally { setIsLoading(false); }
-            } else { setTracks([]); }
-        }, 500);
-        return () => clearTimeout(delayDebounceFn);
-    }, [search]);
-    
-    return (
-        <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }} className="fixed inset-0 bg-surface-100 z-[60] flex flex-col">
-            <div className="flex justify-between items-center p-6 pt-8 bg-surface-100 z-10">
-                 <h3 className="text-white text-xl font-anton uppercase tracking-wide flex items-center gap-2"><i className="fa-brands fa-spotify text-[#1DB954]"></i> Trilha Sonora</h3>
-                 <button onClick={onClose} className="w-10 h-10 rounded-full bg-surface-200 flex items-center justify-center text-white"><i className="fa-solid fa-chevron-down"></i></button>
-            </div>
-            <div className="px-6 pb-4">
-                <div className="relative">
-                    <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-white/50"></i>
-                    <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar no Spotify..." className="w-full bg-surface-200 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:ring-1 focus:ring-[#1DB954] text-sm placeholder-white/30 font-medium" autoFocus />
-                </div>
-            </div>
-            <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-2 custom-scrollbar">
-                {isLoading && <div className="flex justify-center py-10"><i className="fa-solid fa-circle-notch fa-spin text-2xl text-[#1DB954]"></i></div>}
-                {tracks.map(track => (
-                    <button key={track.id} onClick={() => onSelect(track)} className="w-full flex items-center gap-4 p-3 hover:bg-white/5 rounded-xl transition-colors text-left group">
-                        <img src={track.albumArt} alt={track.name} className="w-12 h-12 rounded-md shadow-md" />
-                        <div className="flex-1"><p className="text-white font-bold group-hover:text-[#1DB954] transition-colors text-sm">{track.name}</p><p className="text-white/60 text-xs">{track.artist}</p></div>
-                        <i className="fa-solid fa-plus-circle text-white/20 group-hover:text-[#1DB954] text-xl transition-colors"></i>
-                    </button>
-                ))}
-            </div>
-        </motion.div>
-    )
-}
-
 const ImageEditor: React.FC<ImageEditorProps> = ({ mode, stats, baseImage, onClose, onSave, onPublish }) => {
   const [background, setBackground] = useState<string | null>(baseImage || null);
   const [elements, setElements] = useState<EditorElement[]>([]);
   const [selectedElement, setSelectedElement] = useState<EditorElement | null>(null);
   const [activeFilter, setActiveFilter] = useState('none');
-  const [activeTool, setActiveTool] = useState<'none' | 'filters'>('none');
-  const [isSpotifyOpen, setIsSpotifyOpen] = useState(false);
+  const [activeTool, setActiveTool] = useState<'none' | 'filters' | 'crop'>('none');
   const [isProcessing, setIsProcessing] = useState(false);
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Background Pan/Zoom State
+  const [bgTransform, setBgTransform] = useState({ scale: 1, x: 0, y: 0 });
+  const bgTouchState = useRef({ dist: 0, startX: 0, startY: 0, lastX: 0, lastY: 0, startScale: 1 });
+
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
+  // Initialize Stats
   useEffect(() => {
     const container = imageContainerRef.current;
     if (!container || mode === 'photo-edit') return;
@@ -339,68 +407,81 @@ const ImageEditor: React.FC<ImageEditorProps> = ({ mode, stats, baseImage, onClo
     if (stats) {
       const w = container.offsetWidth;
       const h = container.offsetHeight;
-      const centerX = w / 2 - 100;
+      const centerX = w / 2;
       initialElements.push(
         { id: 'stat-dist', type: 'stat', value: stats.distance.toFixed(2), label: 'Distância (km)', position: { x: centerX, y: h * 0.2 } },
         { id: 'stat-time', type: 'stat', value: formatTime(stats.time), label: 'Tempo', position: { x: centerX, y: h * 0.4 } },
-        { id: 'stat-pace', type: 'stat', value: formatPace(stats.pace), label: 'Ritmo (/km)', position: { x: centerX, y: h * 0.6 } }
       );
     }
     setElements(initialElements);
   }, [stats, mode]);
   
-  const handleUpdateElement = (id: string, updates: Partial<EditorElementData>) => {
+  const handleUpdateElement = (id: string, updates: Partial<EditorElement>) => {
     setElements(prev => prev.map(el => (el.id === id ? { ...el, ...updates } as EditorElement : el)));
-    setSelectedElement(prev => (prev && prev.id === id) ? { ...prev, ...updates } as EditorElement : prev);
-  };
-  
-  const handleUpdatePosition = (id: string, offset: { x: number; y: number }) => {
-    setElements(prev => prev.map(el => el.id === id ? { ...el, position: { x: el.position.x + offset.x, y: el.position.y + offset.y } } : el));
-  };
-
-  const handleResizeElement = (id: string, delta: number) => {
-      setElements(prev => prev.map(el => el.id === id && el.type === 'text' ? { ...el, fontSize: Math.max(10, Math.min(300, el.fontSize + (delta * 0.5))) } : el));
   };
 
   const addTextElement = () => {
     const container = imageContainerRef.current;
     if (!container) return;
     const newText: EditorElement = {
-      id: `text-${Date.now()}`, type: 'text', text: '', font: 'font-anton', color: '#FFFFFF', textStyle: 'none', fontSize: 40, align: 'center', position: { x: container.offsetWidth / 2 - 100, y: container.offsetHeight / 2 }
+      id: `text-${Date.now()}`, type: 'text', text: '', font: 'font-anton', color: '#FFFFFF', textStyle: 'none', fontSize: 30, align: 'center', rotation: 0, scale: 1, position: { x: container.offsetWidth / 2, y: container.offsetHeight / 2 }
     };
     setElements(prev => [...prev, newText]);
     setEditingTextId(newText.id);
-    setActiveTool('none');
   };
-  
-  const addMusicElement = (track: MusicTrack) => {
+
+  const addActivityOverlay = () => {
+      if (!stats) {
+          alert("Nenhum dado de atividade disponível para sobrepor.");
+          return;
+      }
       const container = imageContainerRef.current;
       if (!container) return;
-      setElements(prev => prev.filter(e => e.type !== 'music'));
-      const newMusic: EditorElement = {
-          id: `music-${Date.now()}`, type: 'music', track: track, position: { x: container.offsetWidth / 2 - 110, y: container.offsetHeight * 0.8 }
+
+      // Remove existing overlay if any (to avoid clutter)
+      setElements(prev => prev.filter(e => e.type !== 'activity-sticker'));
+
+      const newOverlay: EditorElement = {
+          id: `overlay-${Date.now()}`,
+          type: 'activity-sticker',
+          stats: {
+              distance: stats.distance,
+              time: stats.time,
+              pace: stats.pace
+          },
+          variant: 'glass',
+          position: { x: container.offsetWidth / 2, y: container.offsetHeight * 0.8 }
       };
-      setElements(prev => [...prev, newMusic]);
-      setSelectedElement(newMusic);
-      setIsSpotifyOpen(false);
-  }
+      setElements(prev => [...prev, newOverlay]);
+      setSelectedElement(newOverlay);
+  };
 
-  const deleteSelectedElement = () => {
-      if (!selectedElement) return;
-      setElements(prev => prev.filter(el => el.id !== selectedElement.id));
-      setSelectedElement(null);
-      setActiveTool('none');
-  }
+  const handleBgTouchStart = (e: React.TouchEvent) => {
+      if (activeTool !== 'crop') return;
+      if (e.touches.length === 1) {
+          bgTouchState.current.startX = e.touches[0].clientX - bgTransform.x;
+          bgTouchState.current.startY = e.touches[0].clientY - bgTransform.y;
+      } else if (e.touches.length === 2) {
+          const dx = e.touches[0].clientX - e.touches[1].clientX;
+          const dy = e.touches[0].clientY - e.touches[1].clientY;
+          bgTouchState.current.dist = Math.sqrt(dx * dx + dy * dy);
+          bgTouchState.current.startScale = bgTransform.scale;
+      }
+  };
 
-  const handleEdit = (item: EditorElement) => {
-      if (item.type === 'text') setEditingTextId(item.id);
-  }
-
-  const handleTextEditDone = (text: string, color: string, font: string, style: 'none' | 'fill' | 'neon', size: number, align: 'left' | 'center' | 'right') => {
-      if (editingTextId) {
-          if (text.trim() === '') setElements(prev => prev.filter(el => el.id !== editingTextId));
-          else handleUpdateElement(editingTextId, { text, color, font: font as any, textStyle: style, fontSize: size, align: align });
-          setEditingTextId(null);
+  const handleBgTouchMove = (e: React.TouchEvent) => {
+      if (activeTool !== 'crop') return;
+      e.preventDefault();
+      if (e.touches.length === 1) {
+          const x = e.touches[0].clientX - bgTouchState.current.startX;
+          const y = e.touches[0].clientY - bgTouchState.current.startY;
+          setBgTransform(prev => ({ ...prev, x, y }));
+      } else if (e.touches.length === 2) {
+          const dx = e.touches[0].clientX - e.touches[1].clientX;
+          const dy = e.touches[0].clientY - e.touches[1].clientY;
+          const newDist = Math.sqrt(dx * dx + dy * dy);
+          const scaleDelta = newDist / bgTouchState.current.dist;
+          setBgTransform(prev => ({ ...prev, scale: Math.max(1, bgTouchState.current.startScale * scaleDelta) }));
       }
   };
 
@@ -415,16 +496,24 @@ const ImageEditor: React.FC<ImageEditorProps> = ({ mode, stats, baseImage, onClo
     if (!ctx) throw new Error("Canvas context not available");
     ctx.scale(scaleFactor, scaleFactor);
 
+    // Draw Background
     if (background) {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         await new Promise<void>((resolve, reject) => {
             img.onload = () => { 
                 ctx.filter = activeFilter;
+                ctx.save();
+                // Apply crop transform
+                ctx.translate(container.offsetWidth / 2 + bgTransform.x, container.offsetHeight / 2 + bgTransform.y);
+                ctx.scale(bgTransform.scale, bgTransform.scale);
+                ctx.translate(-container.offsetWidth / 2, -container.offsetHeight / 2);
+                
                 const ratio = Math.max(container.offsetWidth / img.width, container.offsetHeight / img.height);
                 const cx = (container.offsetWidth - img.width * ratio) / 2;
                 const cy = (container.offsetHeight - img.height * ratio) / 2;
                 ctx.drawImage(img, 0, 0, img.width, img.height, cx, cy, img.width * ratio, img.height * ratio);
+                ctx.restore();
                 ctx.filter = 'none'; 
                 resolve(); 
             };
@@ -436,39 +525,110 @@ const ImageEditor: React.FC<ImageEditorProps> = ({ mode, stats, baseImage, onClo
         ctx.fillRect(0, 0, container.offsetWidth, container.offsetHeight);
     }
     
+    // Draw Elements
     for (const el of elements) {
         ctx.save();
-        const x = el.position.x;
-        const y = el.position.y;
-        if (el.type === 'stat') {
-            ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 4; ctx.fillStyle = '#FFFFFF'; ctx.textAlign = 'center';
-            ctx.font = `bold 50px "Bebas Neue", sans-serif`; ctx.fillText(el.value, x + 100, y + 50);
-            ctx.font = `bold 16px Inter, sans-serif`; ctx.fillText(el.label.toUpperCase(), x + 100, y + 75);
-        } else if (el.type === 'text') {
-            const fontName = el.font === 'font-anton' ? 'Anton' : el.font === 'font-bebas' ? '"Bebas Neue"' : 'Inter';
-            ctx.font = `bold ${el.fontSize}px ${fontName}, sans-serif`; ctx.textBaseline = 'top';
-            const lines = el.text.split('\n'); const lineHeight = el.fontSize * 1.4;
-            let maxLineWidth = 0; lines.forEach(l => { const m = ctx.measureText(l); if (m.width > maxLineWidth) maxLineWidth = m.width; });
-            const totalHeight = lines.length * lineHeight; const pX = 16; const pY = 8;
+        ctx.translate(el.position.x, el.position.y);
+        
+        if (el.type === 'text') {
+            ctx.rotate((el.rotation * Math.PI) / 180);
+            ctx.scale(el.scale, el.scale);
             
-            if (el.textStyle === 'fill') {
-                ctx.fillStyle = el.color;
-                roundedRect(ctx, x, y, maxLineWidth + (pX*2), totalHeight + (pY*2) - (lineHeight - el.fontSize), 12);
-                ctx.fill();
-                ctx.fillStyle = (el.color === '#FFFFFF' ? '#000000' : '#FFFFFF');
+            const t = el as TextItem;
+            ctx.font = `bold ${t.fontSize}px ${FONTS.find(f => f.id === t.font)?.family || 'sans-serif'}`;
+            ctx.textAlign = t.align;
+            ctx.textBaseline = 'middle';
+            
+            const lines = t.text.split('\n');
+            const lineHeight = t.fontSize * 1.2;
+            
+            if (t.textStyle === 'fill') {
+                ctx.fillStyle = t.color;
+                const maxW = Math.max(...lines.map(l => ctx.measureText(l).width));
+                const w = maxW + 30;
+                const h = (lines.length * lineHeight) + 10;
+                ctx.fillRect(-w/2, -(h/2), w, h);
+                ctx.fillStyle = t.color === '#FFFFFF' ? '#000' : '#FFF';
             } else {
-                ctx.fillStyle = el.color;
-                if (el.textStyle === 'neon') { ctx.shadowColor = el.color; ctx.shadowBlur = 20; }
+                ctx.fillStyle = t.color;
+                if(t.textStyle === 'neon') {
+                    ctx.shadowColor = t.color;
+                    ctx.shadowBlur = 15;
+                }
             }
-            const textStartX = el.textStyle === 'fill' ? x + pX : x;
-            const textStartY = el.textStyle === 'fill' ? y + pY : y;
             lines.forEach((line, i) => {
-                const m = ctx.measureText(line);
-                let alignOffset = 0;
-                if (el.align === 'center') alignOffset = (maxLineWidth - m.width) / 2;
-                else if (el.align === 'right') alignOffset = maxLineWidth - m.width;
-                ctx.fillText(line, textStartX + alignOffset, textStartY + (i * lineHeight));
+                const yOffset = (i - (lines.length - 1) / 2) * lineHeight;
+                ctx.fillText(line, 0, yOffset);
             });
+        } 
+        else if (el.type === 'activity-sticker') {
+            const s = el as ActivitySticker;
+            const { distance, time, pace } = s.stats;
+            
+            // Basic drawing logic for sticker - mimicking the HTML visual
+            if (s.variant === 'minimal') {
+                ctx.fillStyle = 'white';
+                ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                ctx.shadowBlur = 4;
+                ctx.shadowOffsetY = 2;
+                ctx.textAlign = 'center';
+                
+                ctx.font = 'bold 60px Anton';
+                ctx.fillText(`${distance.toFixed(2)} km`, 0, -15);
+                
+                ctx.font = 'bold 20px Inter';
+                ctx.fillText(`${formatTime(time)} • ${formatPace(pace)} /km`, 0, 25);
+            } else {
+                // Glass or Orange Box
+                const w = 280;
+                const h = 100;
+                ctx.translate(-w/2, -h/2); // Center
+                
+                // Background
+                if (s.variant === 'glass') {
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                } else {
+                    const grad = ctx.createLinearGradient(0, 0, w, h);
+                    grad.addColorStop(0, '#FC5200');
+                    grad.addColorStop(1, '#EA580C');
+                    ctx.fillStyle = grad;
+                }
+                
+                // Rounded Rect
+                ctx.beginPath();
+                ctx.roundRect(0, 0, w, h, 16);
+                ctx.fill();
+                
+                // Content
+                ctx.fillStyle = 'white';
+                ctx.textAlign = 'center';
+                
+                // Icon Area
+                ctx.font = '24px "Font Awesome 6 Free"'; // Basic fallback if loaded
+                // ctx.fillText('\uf70c', 40, 40); // Running icon code
+                
+                // Stats
+                ctx.textAlign = 'center';
+                
+                // Distance
+                ctx.font = 'bold 24px Anton';
+                ctx.fillText(distance.toFixed(2), 100, 45);
+                ctx.font = 'bold 10px Inter';
+                ctx.fillText('KM', 100, 65);
+                
+                // Time
+                ctx.font = 'bold 24px Anton';
+                ctx.fillText(formatTime(time), 180, 45);
+                ctx.font = 'bold 10px Inter';
+                ctx.fillText('TEMPO', 180, 65);
+
+                // Divider lines
+                ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(140, 20); ctx.lineTo(140, 80);
+                ctx.stroke();
+            }
         }
         ctx.restore();
     }
@@ -490,22 +650,40 @@ const ImageEditor: React.FC<ImageEditorProps> = ({ mode, stats, baseImage, onClo
     <motion.div className="fixed inset-0 bg-black z-[50] flex flex-col overflow-hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       
       {/* --- CANVAS --- */}
-      <div ref={imageContainerRef} className="absolute inset-0 bg-[#121212] flex items-center justify-center z-0" onClick={() => { setSelectedElement(null); setActiveTool('none'); }}>
-        {background ? ( <img src={background} className="w-full h-full object-cover" alt="Background" style={{ filter: activeFilter }} /> ) : ( <div className="text-white/30 text-center"><i className="fa-solid fa-image text-6xl"></i></div> )}
+      <div 
+        ref={imageContainerRef} 
+        className="absolute inset-0 bg-[#121212] overflow-hidden" 
+        onTouchStart={handleBgTouchStart}
+        onTouchMove={handleBgTouchMove}
+        onClick={() => { setSelectedElement(null); setActiveTool('none'); }}
+      >
+        {background && ( 
+            <img 
+                src={background} 
+                className="w-full h-full object-cover pointer-events-none" 
+                alt="Background" 
+                style={{ 
+                    filter: activeFilter,
+                    transform: `translate(${bgTransform.x}px, ${bgTransform.y}px) scale(${bgTransform.scale})`,
+                    transformOrigin: 'center'
+                }} 
+            /> 
+        )}
+        
         <AnimatePresence>
-            {elements.map(el => (el.id !== editingTextId && <DraggableItem key={el.id} item={el} onUpdatePosition={handleUpdatePosition} onSelect={(item) => { setSelectedElement(item); setActiveTool('none'); }} isSelected={el.id === selectedElement?.id} onEdit={() => handleEdit(el)} onResize={handleResizeElement} />))}
+            {elements.map(el => (el.id !== editingTextId && <DraggableItem key={el.id} item={el} onUpdate={handleUpdateElement} onSelect={setSelectedElement} isSelected={el.id === selectedElement?.id} onEdit={() => { if(el.type==='text') setEditingTextId(el.id); }} />))}
         </AnimatePresence>
       </div>
 
       {/* --- TOP BAR --- */}
-      <div className="absolute top-0 left-0 right-0 z-20 p-4 pt-safe flex justify-between items-center bg-gradient-to-b from-black/50 to-transparent pointer-events-none">
-          <button onClick={onClose} className="pointer-events-auto w-10 h-10 rounded-full flex items-center justify-center text-white hover:bg-white/10 transition-all drop-shadow-lg"><i className="fa-solid fa-xmark text-3xl"></i></button>
-          <div className="pointer-events-auto bg-black/50 backdrop-blur-md rounded-full px-3 py-1 flex items-center gap-2 border border-white/10">
-              <img src="https://i.scdn.co/image/ab67616d0000b273b53a52c3175c57502705009b" className="w-6 h-6 rounded-full" alt="Music" />
-              <div className="flex flex-col"><span className="text-[10px] text-white font-bold leading-none">Áudio sugerido</span><span className="text-[8px] text-gray-300 leading-none">Tribo da Periferia, DuckJay</span></div>
-              <button onClick={() => setIsSpotifyOpen(true)} className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center ml-1"><i className="fa-solid fa-plus text-[10px] text-white"></i></button>
-          </div>
-          <div className="w-10"></div> {/* Spacer */}
+      <div className="absolute top-0 left-0 right-0 z-20 p-4 pt-safe flex justify-between items-start pointer-events-none">
+          <button onClick={onClose} className="pointer-events-auto w-10 h-10 rounded-full flex items-center justify-center text-white bg-black/20 backdrop-blur-md"><i className="fa-solid fa-xmark text-2xl"></i></button>
+          
+          {activeTool === 'crop' && <div className="bg-black/50 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest text-white">Modo Zoom/Ajuste</div>}
+
+          <button onClick={handleFinalize} disabled={isProcessing} className="pointer-events-auto h-10 px-6 bg-white text-black rounded-full font-anton uppercase tracking-widest text-sm hover:scale-105 transition-transform flex items-center gap-2">
+              {isProcessing ? <i className="fa-solid fa-spinner fa-spin"></i> : (onPublish ? 'Publicar' : 'Salvar')}
+          </button>
       </div>
 
       {/* --- BOTTOM TOOLBAR --- */}
@@ -524,36 +702,54 @@ const ImageEditor: React.FC<ImageEditorProps> = ({ mode, stats, baseImage, onClo
              </div>
           )}
 
-          <div className="flex items-end justify-between px-6 pb-6">
-              <div className="flex items-center gap-6">
-                  <button onClick={() => setIsSpotifyOpen(true)} className="flex flex-col items-center gap-1"><div className="w-10 h-10 bg-surface-200/50 rounded-xl flex items-center justify-center backdrop-blur-sm"><i className="fa-solid fa-music text-white text-lg"></i></div><span className="text-[10px] font-medium text-white">Música</span></button>
-                  <button onClick={addTextElement} className="flex flex-col items-center gap-1"><div className="w-10 h-10 bg-surface-200/50 rounded-xl flex items-center justify-center backdrop-blur-sm"><span className="font-anton text-white text-xl">Aa</span></div><span className="text-[10px] font-medium text-white">Texto</span></button>
-                  <button onClick={() => {}} className="flex flex-col items-center gap-1"><div className="w-10 h-10 bg-surface-200/50 rounded-xl flex items-center justify-center backdrop-blur-sm"><i className="fa-regular fa-square-plus text-white text-lg"></i></div><span className="text-[10px] font-medium text-white">Sobreposição</span></button>
-                  <button onClick={() => setActiveTool(prev => prev === 'filters' ? 'none' : 'filters')} className="flex flex-col items-center gap-1"><div className="w-10 h-10 bg-surface-200/50 rounded-xl flex items-center justify-center backdrop-blur-sm"><i className="fa-solid fa-wand-magic-sparkles text-white text-lg"></i></div><span className="text-[10px] font-medium text-white">Filtro</span></button>
-                  <button onClick={() => {}} className="flex flex-col items-center gap-1"><div className="w-10 h-10 bg-surface-200/50 rounded-xl flex items-center justify-center backdrop-blur-sm"><i className="fa-solid fa-sliders text-white text-lg"></i></div><span className="text-[10px] font-medium text-white">Editar</span></button>
-              </div>
+          <div className="flex items-center justify-around px-6 pb-6">
+              <button onClick={addTextElement} className="flex flex-col items-center gap-1">
+                  <div className="w-12 h-12 bg-surface-200/50 rounded-full flex items-center justify-center backdrop-blur-sm"><span className="font-anton text-white text-2xl">Aa</span></div>
+                  <span className="text-[10px] font-medium text-white">Texto</span>
+              </button>
+              
+              <button onClick={addActivityOverlay} className="flex flex-col items-center gap-1">
+                  <div className="w-12 h-12 bg-surface-200/50 rounded-full flex items-center justify-center backdrop-blur-sm"><i className="fa-regular fa-square-plus text-white text-xl"></i></div>
+                  <span className="text-[10px] font-medium text-white">Sobreposição</span>
+              </button>
 
-              <button onClick={handleFinalize} disabled={isProcessing} className="bg-blue-600 text-white px-5 py-3 rounded-full font-bold text-sm shadow-lg hover:bg-blue-500 transition-colors flex items-center gap-2">
-                  {isProcessing ? <i className="fa-solid fa-spinner fa-spin"></i> : <>Avançar <i className="fa-solid fa-arrow-right"></i></>}
+              <button onClick={() => setActiveTool(activeTool === 'crop' ? 'none' : 'crop')} className={`flex flex-col items-center gap-1 ${activeTool === 'crop' ? 'text-primary' : 'text-white'}`}>
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm ${activeTool === 'crop' ? 'bg-white text-black' : 'bg-surface-200/50 text-white'}`}><i className="fa-solid fa-crop-simple text-xl"></i></div>
+                  <span className="text-[10px] font-medium">Ajustar</span>
+              </button>
+
+              <button onClick={() => setActiveTool(activeTool === 'filters' ? 'none' : 'filters')} className={`flex flex-col items-center gap-1 ${activeTool === 'filters' ? 'text-primary' : 'text-white'}`}>
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm ${activeTool === 'filters' ? 'bg-white text-black' : 'bg-surface-200/50 text-white'}`}><i className="fa-solid fa-wand-magic-sparkles text-xl"></i></div>
+                  <span className="text-[10px] font-medium">Filtros</span>
               </button>
           </div>
       </div>
 
-      {selectedElement && (
-             <motion.div initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }} className="absolute bottom-28 left-0 right-0 flex justify-center items-center z-30 pointer-events-none">
-                 <div className="bg-black/70 backdrop-blur-xl border border-white/10 rounded-full px-6 py-3 pointer-events-auto shadow-2xl">
-                     <button onClick={deleteSelectedElement} className="text-white hover:text-red-500 transition-colors"><i className="fa-solid fa-trash text-xl"></i></button>
-                 </div>
-             </motion.div>
+      {editingTextId && editingTextItem && (
+          <TextEditorOverlay 
+            initialText={editingTextItem.text}
+            initialColor={editingTextItem.color}
+            initialFont={editingTextItem.font}
+            initialStyle={editingTextItem.textStyle}
+            initialAlign={editingTextItem.align}
+            onDone={(text, color, font, style, align) => {
+                if (!text.trim()) setElements(prev => prev.filter(e => e.id !== editingTextId));
+                else handleUpdateElement(editingTextId, { text, color, font: font as any, textStyle: style, align: align as any });
+                setEditingTextId(null);
+            }}
+          />
       )}
       
-      <AnimatePresence>
-        {isSpotifyOpen && <SpotifyModal onClose={() => setIsSpotifyOpen(false)} onSelect={addMusicElement} />}
-        {editingTextId && editingTextItem && <TextEditingOverlay initialText={editingTextItem.text} initialColor={editingTextItem.color} initialFont={editingTextItem.font} initialStyle={editingTextItem.textStyle} initialSize={editingTextItem.fontSize} initialAlign={editingTextItem.align} onDone={handleTextEditDone} onCancel={() => setEditingTextId(null)} />}
-      </AnimatePresence>
+      {/* Delete Button (Visible only when item selected) */}
+      {selectedElement && (
+           <div className="absolute top-1/2 left-4 z-30 pointer-events-auto">
+               <button onClick={() => { setElements(prev => prev.filter(el => el.id !== selectedElement.id)); setSelectedElement(null); }} className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center text-white shadow-lg">
+                   <i className="fa-solid fa-trash"></i>
+               </button>
+           </div>
+      )}
     </motion.div>
   );
 };
 
 export default ImageEditor;
-

@@ -4,6 +4,8 @@ import { UserData } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import Avatar from './Avatar';
 import ProducerStudentDetail from './ProducerStudentDetail';
+import { createManualRoutine } from '../lib/routineService';
+import { EXERCICIOS_DATABASE, RECEITAS_DATABASE } from '../constants';
 
 interface ProducerPanelProps {
     currentUser: UserData;
@@ -25,14 +27,23 @@ const ProducerPanel: React.FC<ProducerPanelProps> = ({ currentUser, allUsers, on
     const activeStudents = useMemo(() => myStudents.filter(s => s.consultancy?.status === 'active'), [myStudents]);
 
     const handlePublishPlan = (studentId: string) => {
-        // In a real app, you would also generate or attach the routine here.
-        // For mock, we update status to active.
+        // Simulate generating a routine personalized by the professional
+        // In a real app, this would come from a creation interface. 
+        // Here we select random exercises and recipes to mock the "work done".
+        const mockRecipes = RECEITAS_DATABASE.slice(0, 5);
+        const mockExercises = EXERCICIOS_DATABASE.slice(0, 6);
+        
+        const generatedRoutine = createManualRoutine(mockRecipes, mockExercises);
+
         onUpdateOtherUser(studentId, {
             consultancy: {
                 professionalId: currentUser.id,
                 startDate: new Date().toISOString(),
                 status: 'active'
-            }
+            },
+            routine: generatedRoutine, // Assign the generated routine to the student
+            selectedRecipes: mockRecipes,
+            selectedExercises: mockExercises
         });
         
         // Close detail view to refresh list view

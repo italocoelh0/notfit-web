@@ -1,4 +1,3 @@
-
 // pages/Dashboard.tsx
 
 import React, { useState, useMemo } from 'react';
@@ -71,6 +70,7 @@ interface DashboardProps {
   onViewProfile: (userId: string) => void;
   onLikePost: (postId: number) => void;
   onAddComment: (postId: number, text: string) => void;
+  // FIX: Removed duplicate onSharePost entry
   onSharePost: (post: Post) => void;
   onFollowToggle: (targetUserId: string) => void;
   allUsers: UserData[];
@@ -117,6 +117,8 @@ const Dashboard: React.FC<DashboardProps> = props => {
     onUpdatePost,
     onViewProfile,
     onLikePost,
+    onAddComment,
+    // FIX: Removed duplicate onSharePost from destructuring
     onSharePost,
     recipes,
     exercises,
@@ -211,7 +213,7 @@ const Dashboard: React.FC<DashboardProps> = props => {
           onViewImage,
           onSendNotification,
           onGiveFlame,
-          onAddComment: props.onAddComment
+          onAddComment
         };
         return <SocialFeedPage {...socialFeedProps} />;
       case 'search':
@@ -309,7 +311,18 @@ const Dashboard: React.FC<DashboardProps> = props => {
           />
         );
       case 'profile':
-        return <StatsHubPage userData={userData} onViewImage={onViewImage} />;
+        // Updated: Pass posts and handlers for profile editing/settings
+        return (
+            <StatsHubPage 
+                userData={userData} 
+                onViewImage={onViewImage} 
+                posts={posts} // Pass all posts, component filters them
+                onNavigateToEdit={() => setActiveSection('editProfile')}
+                onUpdateUserData={onUpdateUserData}
+                onLogout={onLogout}
+                onNavigate={setActiveSection}
+            />
+        );
       case 'editProfile':
         return (
           <EditProfilePage
@@ -321,7 +334,7 @@ const Dashboard: React.FC<DashboardProps> = props => {
       case 'adminPanel':
         return (
           <AdminPanel
-            onSendNotification={onSendNotification} onToggleEditMode={onToggleEditMode} {...editProps}
+            onSendNotification={onSendNotification} isEditMode={isEditMode} onToggleEditMode={onToggleEditMode} {...editProps}
           />
         );
        case 'flamesStore':
@@ -471,6 +484,7 @@ const Dashboard: React.FC<DashboardProps> = props => {
       <AnimatePresence>
         {isActivityTrackerOpen && (
             <ActivityTrackerPage
+                userData={userData}
                 onClose={() => setIsActivityTrackerOpen(false)}
                 onSaveActivity={onSaveActivity}
             />

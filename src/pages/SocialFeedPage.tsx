@@ -1,14 +1,13 @@
 
-import React, { useState, useRef, useMemo, Suspense, lazy } from 'react';
-import { UserData, Post, UITexts } from '@/types';
+import React, { useState, useRef, useMemo, Suspense, lazy, useEffect } from 'react';
+import { UserData, Post, UITexts } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
-import PostCard from '@components/PostCard';
-import CommentsModal from '@components/CommentsModal';
-import Avatar from '@components/Avatar';
-import InstagramCamera from '@components/InstagramCamera'; // Importando a nova câmera
+import PostCard from '../components/PostCard';
+import CommentsModal from '../components/CommentsModal';
+import Avatar from '../components/Avatar';
+import InstagramCamera from '../components/InstagramCamera';
 
-// Lazy load ImageEditor as it is heavy
-const ImageEditor = lazy(() => import('@components/ImageEditor'));
+const ImageEditor = lazy(() => import('../components/ImageEditor'));
 
 interface EditPostModalProps {
     post: Post;
@@ -106,27 +105,54 @@ const FlameConfirmationModal: React.FC<FlameConfirmationModalProps> = ({ post, o
     );
 };
 
-
 interface CreatePostProps {
   userData: UserData;
-  onCreatePost: (post: any, isPriority?: boolean) => void;
+  onCreatePost: (post: any) => void;
   onSendNotification: (message: string) => void;
 }
 
 const CreatePost: React.FC<CreatePostProps> = ({ userData, onCreatePost, onSendNotification }) => {
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [isEditorOpen, setEditorOpen] = useState(false);
-    const [isCameraOpen, setIsCameraOpen] = useState(false); // Novo estado para câmera
+    const [isCameraOpen, setIsCameraOpen] = useState(false);
+    const [locationName, setLocationName] = useState<string | null>(null);
+    const [isFetchingLocation, setIsFetchingLocation] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Handles file selection from gallery
+    const toggleLocation = () => {
+        if (locationName) {
+            setLocationName(null);
+            return;
+        }
+
+        setIsFetchingLocation(true);
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    // Mock de localização por coordenadas
+                    const mockLocations = ["São Paulo, SP", "Rio de Janeiro, RJ", "Belo Horizonte, MG", "Curitiba, PR", "Vitória, ES"];
+                    const randomLoc = mockLocations[Math.floor(Math.random() * mockLocations.length)];
+                    setLocationName(randomLoc);
+                    setIsFetchingLocation(false);
+                },
+                (error) => {
+                    onSendNotification("Não foi possível obter sua localização.");
+                    setIsFetchingLocation(false);
+                }
+            );
+        } else {
+            onSendNotification("Geolocalização não suportada.");
+            setIsFetchingLocation(false);
+        }
+    };
+
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
             const reader = new FileReader();
             reader.onload = (e) => {
                 setImagePreview(e.target?.result as string);
                 setEditorOpen(true);
-                setIsCameraOpen(false); // Close camera if open
+                setIsCameraOpen(false);
             };
             reader.readAsDataURL(event.target.files[0]);
         }
@@ -139,49 +165,63 @@ const CreatePost: React.FC<CreatePostProps> = ({ userData, onCreatePost, onSendN
     };
 
     const handlePublishFromEditor = (finalImage: string) => {
-        const caption = prompt("Legenda da foto (opcional):", "") || "📸 Nova atualização";
+        const caption = prompt("Legenda da foto (opcional):", "") || "";
         
         onCreatePost({
             userId: userData.id,
             content: caption,
             imageUrl: finalImage,
+            locationName: locationName || undefined
         });
-        onSendNotification("Post publicado com sucesso!");
+        
+        onSendNotification("Post publicado!");
         setImagePreview(null);
+        setLocationName(null);
         setEditorOpen(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
     }
 
     return (
-        <div className="mb-6">
-            <input 
-                type="file" 
-                accept="image/*" 
-                ref={fileInputRef} 
-                onChange={handleFileChange} 
-                className="hidden" 
-            />
+        <div className="mb-8">
+            <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
             
-            <button 
-                onClick={() => setIsCameraOpen(true)}
-                className="w-full bg-surface-100 border border-white/10 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/5 transition-all group shadow-lg"
-            >
+            <div className="bg-surface-100 border border-white/5 rounded-3xl p-4 flex items-center gap-4 shadow-xl">
                 <div className="relative">
                     <Avatar src={userData.userAvatar} alt={userData.name} size="md" />
-                    <div className="absolute -bottom-1 -right-1 bg-primary text-white w-5 h-5 rounded-full flex items-center justify-center border-2 border-surface-100">
-                        <i className="fa-solid fa-plus text-[10px]"></i>
-                    </div>
                 </div>
                 
-                <div className="flex-1 text-left">
-                    <span className="font-anton uppercase tracking-wide text-white text-lg">Nova Publicação</span>
-                    <p className="text-[10px] text-gray-400 uppercase tracking-widest">Compartilhe seu progresso</p>
+                <div className="flex-1">
+                    <button 
+                        onClick={() => setIsCameraOpen(true)}
+                        className="w-full text-left py-2"
+                    >
+                        <span className="text-gray-400 text-sm font-medium">No que você está pensando?</span>
+                    </button>
+                    
+                    <div className="flex items-center gap-3 mt-1">
+                        <button 
+                            onClick={toggleLocation}
+                            className={`flex items-center gap-1.5 px-2 py-1 rounded-full transition-all ${locationName ? 'bg-primary/20 text-primary border border-primary/20' : 'text-gray-500 hover:text-gray-300'}`}
+                        >
+                            {isFetchingLocation ? (
+                                <i className="fa-solid fa-circle-notch fa-spin text-[10px]"></i>
+                            ) : (
+                                <i className={`fa-solid fa-location-dot text-[10px] ${locationName ? 'text-primary' : ''}`}></i>
+                            )}
+                            <span className="text-[10px] font-bold uppercase tracking-widest">
+                                {locationName || "Adicionar Local"}
+                            </span>
+                        </button>
+                    </div>
                 </div>
 
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                    <i className="fa-solid fa-camera text-lg"></i>
-                </div>
-            </button>
+                <button 
+                    onClick={() => setIsCameraOpen(true)}
+                    className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-primary transition-colors"
+                >
+                    <i className="fa-solid fa-camera"></i>
+                </button>
+            </div>
 
              <AnimatePresence>
                 {isCameraOpen && (
@@ -215,7 +255,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ userData, onCreatePost, onSendN
 interface SocialFeedPageProps {
   userData: UserData;
   posts: Post[];
-  onCreatePost: (post: any, isPriority?: boolean) => void;
+  onCreatePost: (post: any) => void;
   onDeletePost: (postId: number) => void;
   onUpdatePost: (postId: number, newContent: string) => void;
   onViewProfile: (userId: string) => void;
@@ -226,26 +266,27 @@ interface SocialFeedPageProps {
   onSendNotification: (message: string) => void;
   onGiveFlame: (postId: number, authorId: string, updatePreference: boolean) => void;
   onAddComment: (postId: number, text: string) => void;
-  
-  // Added to match Dashboard call (even if not used)
-  isEditMode?: boolean;
-  uiTexts?: UITexts;
-  onUpdateUiText?: (page: keyof UITexts, key: string, value: string) => void;
 }
 
 const SocialFeedPage: React.FC<SocialFeedPageProps> = (props) => {
     const [editingPost, setEditingPost] = useState<Post | null>(null);
     const [flameConfirmPost, setFlameConfirmPost] = useState<Post | null>(null);
     const [commentsPost, setCommentsPost] = useState<Post | null>(null);
+    const [searchQuery, setSearchQuery] = useState("");
 
-    // Optimized sorting with useMemo
-    const sortedPosts = useMemo(() => {
-        return [...props.posts].sort((a, b) => {
-            if (a.isPriority && !b.isPriority) return -1;
-            if (!a.isPriority && b.isPriority) return 1;
-            return b.id - a.id;
-        });
-    }, [props.posts]);
+    const filteredPosts = useMemo(() => {
+        let result = [...props.posts];
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            result = result.filter(p => 
+                p.userName.toLowerCase().includes(query) ||
+                p.username.toLowerCase().includes(query) ||
+                p.locationName?.toLowerCase().includes(query) ||
+                (p.content && p.content.toLowerCase().includes(query))
+            );
+        }
+        return result.sort((a, b) => b.id - a.id);
+    }, [props.posts, searchQuery]);
     
     const handleFlameTrigger = (post: Post) => {
         if (props.userData.skipFlameConfirmation) {
@@ -263,24 +304,56 @@ const SocialFeedPage: React.FC<SocialFeedPageProps> = (props) => {
     };
 
     return (
-        <div className="max-w-xl mx-auto pb-24">
-            <CreatePost userData={props.userData} onCreatePost={props.onCreatePost} onSendNotification={props.onSendNotification} />
-            <div className="space-y-4">
-                {sortedPosts.map(post => (
-                    <PostCard 
-                        key={post.id}
-                        post={post}
-                        currentUser={props.userData}
-                        onLike={props.onLikePost}
-                        onShare={props.onSharePost}
-                        onViewProfile={props.onViewProfile}
-                        onDelete={props.onDeletePost}
-                        onEdit={setEditingPost}
-                        onViewImage={props.onViewImage}
-                        onGiveFlameTrigger={handleFlameTrigger}
-                        onOpenComments={setCommentsPost}
+        <div className="max-w-xl mx-auto pb-24 px-4">
+            {/* Barra de Busca Clean */}
+            <div className="mb-8 sticky top-0 z-30 pt-2 pb-2 bg-background/95 backdrop-blur-md">
+                <div className="relative group">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-primary transition-colors">
+                        <i className="fa-solid fa-magnifying-glass text-xs"></i>
+                    </div>
+                    <input 
+                        type="text" 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Buscar no feed..."
+                        className="w-full bg-surface-100 border border-white/5 rounded-2xl py-3 pl-11 pr-11 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all shadow-2xl shadow-black/40"
                     />
-                ))}
+                    {searchQuery && (
+                        <button 
+                            onClick={() => setSearchQuery("")}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                        >
+                            <i className="fa-solid fa-circle-xmark text-xs"></i>
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            <CreatePost userData={props.userData} onCreatePost={props.onCreatePost} onSendNotification={props.onSendNotification} />
+            
+            <div className="space-y-2">
+                {filteredPosts.length > 0 ? (
+                    filteredPosts.map(post => (
+                        <PostCard 
+                            key={post.id}
+                            post={post}
+                            currentUser={props.userData}
+                            onLike={props.onLikePost}
+                            onShare={props.onSharePost}
+                            onViewProfile={props.onViewProfile}
+                            onDelete={props.onDeletePost}
+                            onEdit={setEditingPost}
+                            onViewImage={props.onViewImage}
+                            onGiveFlameTrigger={handleFlameTrigger}
+                            onOpenComments={setCommentsPost}
+                        />
+                    ))
+                ) : (
+                    <div className="py-20 text-center opacity-30">
+                        <i className="fa-solid fa-ghost text-4xl mb-4"></i>
+                        <p className="font-anton uppercase text-lg tracking-widest">Nada encontrado</p>
+                    </div>
+                )}
             </div>
 
             <AnimatePresence>

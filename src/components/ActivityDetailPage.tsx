@@ -3,7 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { RecordedActivity, UserData } from '../types';
-import { formatTime, formatPace } from '@lib/geolocation';
+import { formatTime, formatPace } from '../lib/geolocation';
 
 interface ActivityDetailPageProps {
     activity: RecordedActivity;

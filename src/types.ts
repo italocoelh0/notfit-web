@@ -1,3 +1,4 @@
+
 // types.ts
 
 export type Page =
@@ -186,7 +187,7 @@ export interface LeaderboardEntry {
 
 export interface Competition {
     id: string;
-	  creatorId: string;					  
+    creatorId: string;
     name: string;
     description: string;
     banner: string | null;
@@ -262,6 +263,7 @@ export interface Post {
   imageUrl?: string;
   videoUrl?: string;
   location?: { lat: number; lon: number };
+  locationName?: string; // Novo Campo legível
   likedByUserIds: string[];
   flamedByUserIds: string[];
   comments: Comment[];

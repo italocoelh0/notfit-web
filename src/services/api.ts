@@ -1,495 +1,528 @@
+// services/api.ts - Usando Supabase diretamente
 
-import { API_BASE_URL, USE_MOCK_API } from '@/config';
-import { UserData, Post, EventData, MusicTrack, EventComment, DirectMessage } from './../types';
-import { DEFAULT_UI_TEXTS, EXERCICIOS_DATABASE, RECEITAS_DATABASE, PROFESSIONALS_DATABASE } from './../constants';
+import { supabase } from '../lib/supabaseClient';
+import { UserData, Post, EventData, EventComment, DirectMessage } from '../types';
+import { RECEITAS_DATABASE, EXERCICIOS_DATABASE, PROFESSIONALS_DATABASE } from '../constants';
 
-// Mock Data
-const mockUsers: UserData[] = [
-    {
-        id: 'u1',
-        name: 'Dev User',
-        email: 'dev@nowfit.com',
-        userAvatar: '👤',
-        username: 'dev_user',
-        birthDate: '1990-01-01',
-        age: 30,
-        weight: 75,
-        height: 175,
-        goals: ['Ganhar Massa'],
-        selectedRecipes: [],
-        selectedExercises: [],
-        followerIds: ['u2', 'u3', 'u4'],
-        followingIds: ['u2'],
-        blockedUserIds: [],
-        flameBalance: 10,
-        isVerified: true,
-        isAdmin: true,
-        isProfessional: true, // Added for testing professional view
-        isProfilePublic: true
-    },
-    {
-        id: 'u2',
-        name: 'Jane Doe',
-        email: 'jane@example.com',
-        userAvatar: '👩',
-        username: 'janedoe',
-        birthDate: '1992-05-15',
-        age: 28,
-        weight: 60,
-        height: 165,
-        goals: ['Perder Peso'],
-        selectedRecipes: [],
-        selectedExercises: [],
-        followerIds: ['u1'],
-        followingIds: ['u1'],
-        blockedUserIds: [],
-        flameBalance: 5,
-        isVerified: false,
-        isProfilePublic: true,
-        consultancy: {
-            professionalId: 'u1',
-            startDate: new Date().toISOString(),
-            status: 'active' // Publicado
-        }
-    },
-    {
-        id: 'u3',
-        name: 'Pedro Alves',
-        email: 'pedro@example.com',
-        userAvatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-        username: 'pedro_fit',
-        birthDate: '1995-08-20',
-        age: 29,
-        weight: 82,
-        height: 180,
-        goals: ['Hipertrofia'],
-        selectedRecipes: [],
-        selectedExercises: [],
-        followerIds: ['u1'],
-        followingIds: ['u1'],
-        blockedUserIds: [],
-        flameBalance: 100,
-        isVerified: false,
-        isProfilePublic: true,
-        consultancy: {
-            professionalId: 'u1',
-            startDate: new Date().toISOString(),
-            status: 'pending' // Não publicado
-        }
-    },
-    {
-        id: 'u4',
-        name: 'Mariana Costa',
-        email: 'mari@example.com',
-        userAvatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-        username: 'maricosta',
-        birthDate: '1998-02-10',
-        age: 26,
-        weight: 58,
-        height: 160,
-        goals: ['Condicionamento'],
-        selectedRecipes: [],
-        selectedExercises: [],
-        followerIds: ['u1'],
-        followingIds: ['u1'],
-        blockedUserIds: [],
-        flameBalance: 20,
-        isVerified: false,
-        isProfilePublic: true,
-        consultancy: {
-            professionalId: 'u1',
-            startDate: new Date().toISOString(),
-            status: 'pending' // Não publicado
-        }
-    }
-];
+// Mapeia dados do Supabase para o formato do app
+const mapProfile = (profile: any): UserData => ({
+  id: profile.id,
+  email: profile.email,
+  name: profile.name || '',
+  birthDate: profile.birth_date || '',
+  userAvatar: profile.avatar_url || '👤',
+  username: profile.username || '',
+  age: profile.age || 0,
+  weight: profile.weight || 0,
+  height: profile.height || 0,
+  goals: profile.goals || [],
+  selectedRecipes: profile.selected_recipes || [],
+  selectedExercises: profile.selected_exercises || [],
+  followerIds: profile.follower_ids || [],
+  followingIds: profile.following_ids || [],
+  blockedUserIds: profile.blocked_user_ids || [],
+  flameBalance: profile.flame_balance || 0,
+  isVerified: profile.is_verified || false,
+  isAdmin: profile.is_admin || false,
+  isProfessional: profile.is_professional || false,
+  isProfilePublic: profile.is_profile_public !== false,
+  bio: profile.bio,
+  activityType: profile.activity_type,
+  routine: profile.routine,
+  consultancy: profile.consultancy,
+  activities: profile.activities,
+  competitions: profile.competitions,
+  ownedBadgeIds: profile.owned_badge_ids,
+  equippedBadgeId: profile.equipped_badge_id,
+  skipFlameConfirmation: profile.skip_flame_confirmation,
+});
 
-const mockPosts: Post[] = [
-    {
-        id: 1,
-        userId: 'u2',
-        userName: 'Jane Doe',
-        userAvatar: '👩',
-        username: 'janedoe',
-        timestamp: new Date().toISOString(),
-        content: 'Just finished a great workout!',
-        likedByUserIds: ['u1'],
-        flamedByUserIds: [],
-        comments: [
-            {
-                id: 101,
-                userId: 'u1',
-                userName: 'Dev User',
-                userAvatar: '👤',
-                text: 'Great job!',
-                timestamp: new Date(Date.now() - 3600000).toISOString()
-            }
-        ],
-        isPriority: false,
-        authorIsVerified: false
-    }
-];
+const mapPost = (post: any): Post => ({
+  id: post.id,
+  userId: post.user_id,
+  userName: post.profiles?.name || 'Unknown',
+  userAvatar: post.profiles?.avatar_url || '👤',
+  username: post.profiles?.username || '',
+  timestamp: new Date(post.created_at).toISOString(),
+  content: post.content,
+  imageUrl: post.image_url,
+  videoUrl: post.video_url,
+  likedByUserIds: post.liked_by_user_ids || [],
+  flamedByUserIds: post.flamed_by_user_ids || [],
+  comments: post.comments || [],
+  isPriority: post.is_priority || false,
+  authorIsVerified: post.profiles?.is_verified || false,
+});
 
-const mockEvents: EventData[] = [
-    {
-        id: 1,
-        creatorId: 'u1',
-        title: 'Corrida Matinal',
-        description: 'Uma corrida leve no parque para começar o dia.',
-        imageUrl: 'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?auto=format&fit=crop&q=80&w=2070&ixlib=rb-4.0.3',
-        date: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
-        time: '07:00',
-        location: { state: 'SP', city: 'São Paulo' },
-        type: 'Corrida',
-        participantIds: ['u1', 'u2'],
-        updates: [],
-        requiresApproval: false
-    }
-];
-
-const mockMessages: DirectMessage[] = [
-    {
-        id: 1,
-        senderId: 'u2',
-        receiverId: 'u1',
-        text: 'Olá! Vamos treinar amanhã?',
-        timestamp: new Date(Date.now() - 7200000).toISOString(),
-        read: false
-    }
-];
-
-const getHeaders = () => {
-    const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-    };
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-    return headers;
-};
+const mapEvent = (event: any): EventData => ({
+  id: event.id,
+  creatorId: event.creator_id,
+  title: event.title,
+  description: event.description,
+  imageUrl: event.image_url,
+  date: event.date,
+  time: event.time,
+  location: { state: event.state, city: event.city },
+  type: event.type,
+  participantIds: event.participant_ids || [],
+  updates: event.updates || [],
+  requiresApproval: event.requires_approval || false,
+});
 
 export const api = {
-    auth: {
-        login: async (email: string, password?: string) => {
-             if (USE_MOCK_API) {
-                const user = mockUsers.find(u => u.email === email);
-                // Simple mock login, ignoring password check for now or assuming correct
-                if (user) return { user, token: 'mock_token_123' };
-                throw new Error('Invalid login credentials');
-            }
-            const res = await fetch(`${API_BASE_URL}/auth/login`, {
-                 method: 'POST',
-                 headers: getHeaders(),
-                 body: JSON.stringify({ email, password })
-            });
-            if (!res.ok) throw new Error('Failed to login');
-            return await res.json();
-        },
-        register: async (data: any) => {
-             if (USE_MOCK_API) {
-                 const newUser: UserData = {
-                     id: `u${mockUsers.length + 1}`,
-                     ...data,
-                     userAvatar: '👤',
-                     username: data.username || data.name.toLowerCase().replace(/\s/g, ''),
-                     age: 0, weight: 0, height: 0, goals: [],
-                     selectedRecipes: [], selectedExercises: [],
-                     followerIds: [], followingIds: [], blockedUserIds: [],
-                     flameBalance: 0, isVerified: false, isProfilePublic: true
-                 };
-                 mockUsers.push(newUser);
-                 return { user: newUser, token: 'mock_token_new' };
-             }
-              const res = await fetch(`${API_BASE_URL}/auth/register`, {
-                 method: 'POST',
-                 headers: getHeaders(),
-                 body: JSON.stringify(data)
-             });
-             if (!res.ok) throw new Error('Failed to register');
-             return await res.json();
-        },
-        logout: async () => {
-            if (USE_MOCK_API) return true;
-            await fetch(`${API_BASE_URL}/auth/logout`, { method: 'POST', headers: getHeaders() });
-        },
-        getCurrentUser: async () => {
-             if (USE_MOCK_API) {
-                 // Just return the dev user for persistence simulation in mock mode
-                 return mockUsers[0]; 
-             }
-             const res = await fetch(`${API_BASE_URL}/auth/me`, { headers: getHeaders() });
-             if (!res.ok) return null;
-             return await res.json();
-        }
-    },
-    users: {
-        update: async (id: string, updates: Partial<UserData>) => {
-            if (USE_MOCK_API) {
-                const userIndex = mockUsers.findIndex(u => u.id === id);
-                if (userIndex > -1) {
-                    mockUsers[userIndex] = { ...mockUsers[userIndex], ...updates };
-                    return mockUsers[userIndex];
-                }
-                throw new Error('User not found');
-            }
-             const res = await fetch(`${API_BASE_URL}/users/${id}`, {
-                 method: 'PUT',
-                 headers: getHeaders(),
-                 body: JSON.stringify(updates)
-             });
-             if (!res.ok) throw new Error('Failed to update user');
-             return await res.json();
-        },
-        checkUsername: async (username: string) => {
-            if (USE_MOCK_API) {
-                return mockUsers.some(u => u.username === username);
-            }
-             const res = await fetch(`${API_BASE_URL}/users/check-username?username=${username}`, { headers: getHeaders() });
-             const data = await res.json();
-             return data.exists;
-        },
-        getAll: async () => {
-            if (USE_MOCK_API) return [...mockUsers];
-            const res = await fetch(`${API_BASE_URL}/users`, { headers: getHeaders() });
-            if (!res.ok) throw new Error('Failed to fetch users');
-            return await res.json();
-        }
-    },
-    posts: {
-        create: async (postData: any) => {
-             if (USE_MOCK_API) {
-                 const newPost = { 
-                     id: Date.now(), 
-                     ...postData, 
-                     timestamp: new Date().toISOString(),
-                     likedByUserIds: [],
-                     flamedByUserIds: [],
-                     comments: [] 
-                 };
-                 mockPosts.unshift(newPost);
-                 return newPost;
-             }
-             const res = await fetch(`${API_BASE_URL}/posts`, { 
-                 method: 'POST', 
-                 headers: getHeaders(), 
-                 body: JSON.stringify(postData) 
-             });
-             if (!res.ok) throw new Error('Failed to create post');
-             return await res.json();
-        },
-        list: async () => {
-            if (USE_MOCK_API) return [...mockPosts];
-            const res = await fetch(`${API_BASE_URL}/posts`, { headers: getHeaders() });
-            if (!res.ok) throw new Error('Failed to fetch posts');
-            return await res.json();
-        },
-        like: async (postId: number, userId: string) => {
-             if (USE_MOCK_API) {
-                 const post = mockPosts.find(p => p.id === postId);
-                 if (post) {
-                     if (post.likedByUserIds.includes(userId)) {
-                         post.likedByUserIds = post.likedByUserIds.filter(id => id !== userId);
-                     } else {
-                         post.likedByUserIds.push(userId);
-                     }
-                     return post;
-                 }
-                 throw new Error('Post not found');
-             }
-             const res = await fetch(`${API_BASE_URL}/posts/${postId}/like`, { 
-                 method: 'POST', 
-                 headers: getHeaders(),
-                 body: JSON.stringify({ userId })
-             });
-             if (!res.ok) throw new Error('Failed to like post');
-             return await res.json();
-        },
-        delete: async (postId: number) => {
-             if (USE_MOCK_API) {
-                 const index = mockPosts.findIndex(p => p.id === postId);
-                 if (index > -1) mockPosts.splice(index, 1);
-                 return true;
-             }
-             await fetch(`${API_BASE_URL}/posts/${postId}`, { method: 'DELETE', headers: getHeaders() });
-        },
-        update: async (postId: number, content: string) => {
-             if (USE_MOCK_API) {
-                 const post = mockPosts.find(p => p.id === postId);
-                 if (post) post.content = content;
-                 return post;
-             }
-             const res = await fetch(`${API_BASE_URL}/posts/${postId}`, { 
-                 method: 'PUT', 
-                 headers: getHeaders(), 
-                 body: JSON.stringify({ content }) 
-             });
-             if (!res.ok) throw new Error('Failed to update post');
-             return await res.json();
-        },
-        giveFlame: async (postId: number, giverId: string, receiverId: string) => {
-             if (USE_MOCK_API) {
-                 const post = mockPosts.find(p => p.id === postId);
-                 const giver = mockUsers.find(u => u.id === giverId);
-                 const receiver = mockUsers.find(u => u.id === receiverId);
+  auth: {
+    login: async (email: string, password: string) => {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-                 if (post && giver) {
-                     if (giver.flameBalance < 1) throw new Error("Saldo insuficiente");
-                     
-                     if (post.flamedByUserIds.includes(giverId)) throw new Error("Você já doou um flame para este post");
+      if (error) throw new Error(error.message);
 
-                     giver.flameBalance -= 1;
-                     if (receiver) receiver.flameBalance += 1;
-                     post.flamedByUserIds.push(giverId);
-                     
-                     return { success: true, newBalance: giver.flameBalance };
-                 }
-                 throw new Error("Erro ao processar doação");
-             }
-              const res = await fetch(`${API_BASE_URL}/posts/${postId}/flame`, { 
-                  method: 'POST', 
-                  headers: getHeaders(),
-                  body: JSON.stringify({ receiverId, giverId })
-              });
-             if (!res.ok) throw new Error('Falha na transação');
-             return await res.json();
-        },
-        comment: async (postId: number, userId: string, text: string) => {
-            if (USE_MOCK_API) {
-                const post = mockPosts.find(p => p.id === postId);
-                const user = mockUsers.find(u => u.id === userId);
-                if (post && user) {
-                    post.comments.push({
-                        id: Date.now(),
-                        userId,
-                        userName: user.name,
-                        userAvatar: user.userAvatar,
-                        text,
-                        timestamp: new Date().toISOString()
-                    });
-                }
-                return true;
-            }
-            await fetch(`${API_BASE_URL}/posts/${postId}/comments`, {
-                method: 'POST',
-                headers: getHeaders(),
-                body: JSON.stringify({ text, userId })
-            });
-        },
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user!.id)
+        .single();
+
+      if (profileError) throw new Error(profileError.message);
+
+      return {
+        user: mapProfile({ ...profile, email: data.user!.email }),
+        token: data.session!.access_token,
+      };
     },
-    events: {
-        list: async () => {
-             if (USE_MOCK_API) return [...mockEvents];
-             const res = await fetch(`${API_BASE_URL}/events`, { headers: getHeaders() });
-             if (!res.ok) throw new Error('Failed to list events');
-             return await res.json();
+
+    register: async (data: { name: string; email: string; birthDate: string; password: string; username: string }) => {
+      const { data: authData, error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            name: data.name,
+            username: data.username,
+            birth_date: data.birthDate,
+          },
         },
-        create: async (eventData: any) => {
-             if (USE_MOCK_API) {
-                 const newEvent = { 
-                     id: Date.now(), 
-                     ...eventData, 
-                     participantIds: [eventData.creatorId],
-                     updates: [] 
-                 };
-                 mockEvents.unshift(newEvent);
-                 return newEvent;
-             }
-             const res = await fetch(`${API_BASE_URL}/events`, {
-                 method: 'POST',
-                 headers: getHeaders(),
-                 body: JSON.stringify(eventData)
-             });
-             if (!res.ok) throw new Error('Failed to create event');
-             return await res.json();
-        },
-        join: async (eventId: number, userId: string) => {
-             if (USE_MOCK_API) {
-                 const event = mockEvents.find(e => e.id === eventId);
-                 if (event) {
-                     if (event.participantIds.includes(userId)) {
-                         event.participantIds = event.participantIds.filter(id => id !== userId);
-                     } else {
-                         event.participantIds.push(userId);
-                     }
-                 }
-                 return true;
-             }
-             const res = await fetch(`${API_BASE_URL}/events/${eventId}/join`, {
-                 method: 'POST',
-                 headers: getHeaders(),
-                 body: JSON.stringify({ userId })
-             });
-             if (!res.ok) throw new Error('Failed to join event');
-             return await res.json();
-        },
-        getComments: async (eventId: number): Promise<EventComment[]> => {
-             if (USE_MOCK_API) return [];
-             const res = await fetch(`${API_BASE_URL}/events/${eventId}/comments`, { headers: getHeaders() });
-             if (!res.ok) throw new Error('Failed to fetch comments');
-             return await res.json();
-        },
-        addComment: async (data: any): Promise<EventComment> => {
-             if (USE_MOCK_API) return { 
-                 id: Date.now(), 
-                 event_id: data.event_id, 
-                 user_id: data.user_id, 
-                 text: data.text, 
-                 created_at: new Date().toISOString(),
-                 profile: data.profile
-             };
-             const res = await fetch(`${API_BASE_URL}/events/${data.event_id}/comments`, {
-                 method: 'POST',
-                 headers: getHeaders(),
-                 body: JSON.stringify(data)
-             });
-             if (!res.ok) throw new Error('Failed to add comment');
-             return await res.json();
-        }
+      });
+
+      if (error) throw new Error(error.message);
+
+      // Criar perfil
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user!.id,
+          name: data.name,
+          username: data.username,
+          birth_date: data.birthDate,
+          email: data.email,
+        });
+
+      if (profileError) throw new Error(profileError.message);
+
+      return { user: authData.user, token: authData.session!.access_token };
     },
-    messages: {
-        list: async (userId: string) => {
-             if (USE_MOCK_API) {
-                 return mockMessages.filter(m => m.senderId === userId || m.receiverId === userId);
-             }
-             const res = await fetch(`${API_BASE_URL}/messages?userId=${userId}`, { headers: getHeaders() });
-             if (!res.ok) throw new Error('Failed to list messages');
-             return await res.json();
-        },
-        send: async (data: any) => {
-             if (USE_MOCK_API) {
-                 const newMsg = {
-                     id: Date.now(),
-                     senderId: data.senderId,
-                     receiverId: data.receiverId,
-                     text: data.text,
-                     audioUrl: data.audioUrl,
-                     timestamp: new Date().toISOString(),
-                     read: false
-                 };
-                 mockMessages.push(newMsg);
-                 return newMsg;
-             }
-             const res = await fetch(`${API_BASE_URL}/messages`, {
-                 method: 'POST',
-                 headers: getHeaders(),
-                 body: JSON.stringify(data)
-             });
-             if (!res.ok) throw new Error('Failed to send message');
-             return await res.json();
-        }
+
+    logout: async () => {
+      await supabase.auth.signOut();
     },
-    music: {
-        search: async (query: string): Promise<MusicTrack[]> => {
-            // Mock search
-            if (USE_MOCK_API) return [];
-            return [];
-        }
+
+    getCurrentUser: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      return profile ? mapProfile({ ...profile, email: user.email }) : null;
     },
-    data: {
-        getRecipes: async () => RECEITAS_DATABASE,
-        getExercises: async () => EXERCICIOS_DATABASE,
-        getProfessionals: async () => PROFESSIONALS_DATABASE,
-        getEvents: async () => mockEvents,
-    }
+  },
+
+  users: {
+    get: async (id: string) => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw new Error(error.message);
+      return mapProfile(data);
+    },
+
+    update: async (id: string, updates: Partial<UserData>) => {
+      const dbUpdates: any = {};
+
+      // Mapear campos do app para o banco
+      if (updates.name !== undefined) dbUpdates.name = updates.name;
+      if (updates.userAvatar !== undefined) dbUpdates.avatar_url = updates.userAvatar;
+      if (updates.username !== undefined) dbUpdates.username = updates.username;
+      if (updates.age !== undefined) dbUpdates.age = updates.age;
+      if (updates.weight !== undefined) dbUpdates.weight = updates.weight;
+      if (updates.height !== undefined) dbUpdates.height = updates.height;
+      if (updates.goals !== undefined) dbUpdates.goals = updates.goals;
+      if (updates.selectedRecipes !== undefined) dbUpdates.selected_recipes = updates.selectedRecipes;
+      if (updates.selectedExercises !== undefined) dbUpdates.selected_exercises = updates.selectedExercises;
+      if (updates.flameBalance !== undefined) dbUpdates.flame_balance = updates.flameBalance;
+      if (updates.bio !== undefined) dbUpdates.bio = updates.bio;
+      if (updates.isProfilePublic !== undefined) dbUpdates.is_profile_public = updates.isProfilePublic;
+      if (updates.routine !== undefined) dbUpdates.routine = updates.routine;
+      if (updates.activities !== undefined) dbUpdates.activities = updates.activities;
+      if (updates.consultancy !== undefined) dbUpdates.consultancy = updates.consultancy;
+      if (updates.followerIds !== undefined) dbUpdates.follower_ids = updates.followerIds;
+      if (updates.followingIds !== undefined) dbUpdates.following_ids = updates.followingIds;
+      if (updates.skipFlameConfirmation !== undefined) dbUpdates.skip_flame_confirmation = updates.skipFlameConfirmation;
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(dbUpdates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw new Error(error.message);
+      return mapProfile(data);
+    },
+
+    checkUsername: async (username: string) => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', username)
+        .maybeSingle();
+
+      return !!data;
+    },
+
+    getAll: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*');
+
+      if (error) throw new Error(error.message);
+      return data.map(mapProfile);
+    },
+  },
+
+  posts: {
+    create: async (postData: any) => {
+      const { data, error } = await supabase
+        .from('posts')
+        .insert({
+          user_id: postData.userId,
+          content: postData.content,
+          image_url: postData.imageUrl,
+          video_url: postData.videoUrl,
+          is_priority: postData.isPriority || false,
+        })
+        .select('*, profiles(*)')
+        .single();
+
+      if (error) throw new Error(error.message);
+      return mapPost(data);
+    },
+
+    list: async () => {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*, profiles(*)')
+        .order('created_at', { ascending: false });
+
+      if (error) throw new Error(error.message);
+      return data.map(mapPost);
+    },
+
+    like: async (postId: number, userId: string) => {
+      const { data: post } = await supabase
+        .from('posts')
+        .select('liked_by_user_ids')
+        .eq('id', postId)
+        .single();
+
+      if (!post) throw new Error('Post not found');
+
+      const likedByUserIds = post.liked_by_user_ids || [];
+      const newLikes = likedByUserIds.includes(userId)
+        ? likedByUserIds.filter((id: string) => id !== userId)
+        : [...likedByUserIds, userId];
+
+      const { data, error } = await supabase
+        .from('posts')
+        .update({ liked_by_user_ids: newLikes })
+        .eq('id', postId)
+        .select('*, profiles(*)')
+        .single();
+
+      if (error) throw new Error(error.message);
+      return mapPost(data);
+    },
+
+    delete: async (postId: number) => {
+      const { error } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', postId);
+
+      if (error) throw new Error(error.message);
+      return true;
+    },
+
+    update: async (postId: number, content: string) => {
+      const { data, error } = await supabase
+        .from('posts')
+        .update({ content })
+        .eq('id', postId)
+        .select('*, profiles(*)')
+        .single();
+
+      if (error) throw new Error(error.message);
+      return mapPost(data);
+    },
+
+    giveFlame: async (postId: number, giverId: string, receiverId: string) => {
+      // Buscar dados atuais
+      const { data: giver } = await supabase
+        .from('profiles')
+        .select('flame_balance')
+        .eq('id', giverId)
+        .single();
+
+      const { data: post } = await supabase
+        .from('posts')
+        .select('flamed_by_user_ids')
+        .eq('id', postId)
+        .single();
+
+      if (!giver || giver.flame_balance < 1) {
+        throw new Error('Saldo insuficiente');
+      }
+
+      const flamedByUserIds = post?.flamed_by_user_ids || [];
+      if (flamedByUserIds.includes(giverId)) {
+        throw new Error('Você já doou um flame para este post');
+      }
+
+      // Atualizar em paralelo
+      await Promise.all([
+        // Diminuir flame do doador
+        supabase.from('profiles').update({ flame_balance: giver.flame_balance - 1 }).eq('id', giverId),
+        // Aumentar flame do receptor
+        supabase.rpc('increment_flame_balance', { user_id: receiverId, amount: 1 }),
+        // Atualizar post
+        supabase.from('posts').update({ flamed_by_user_ids: [...flamedByUserIds, giverId] }).eq('id', postId),
+      ]);
+
+      return { success: true, newBalance: giver.flame_balance - 1 };
+    },
+
+    comment: async (postId: number, userId: string, text: string) => {
+      const { data: user } = await supabase
+        .from('profiles')
+        .select('name, avatar_url')
+        .eq('id', userId)
+        .single();
+
+      const { data: post } = await supabase
+        .from('posts')
+        .select('comments')
+        .eq('id', postId)
+        .single();
+
+      const comments = post?.comments || [];
+      comments.push({
+        id: Date.now(),
+        userId,
+        userName: user?.name || 'Unknown',
+        userAvatar: user?.avatar_url || '👤',
+        text,
+        timestamp: new Date().toISOString(),
+      });
+
+      await supabase.from('posts').update({ comments }).eq('id', postId);
+      return true;
+    },
+  },
+
+  events: {
+    list: async () => {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('date', { ascending: true });
+
+      if (error) throw new Error(error.message);
+      return data.map(mapEvent);
+    },
+
+    create: async (eventData: any) => {
+      const { data, error } = await supabase
+        .from('events')
+        .insert({
+          creator_id: eventData.creatorId,
+          title: eventData.title,
+          description: eventData.description,
+          image_url: eventData.imageUrl,
+          date: eventData.date,
+          time: eventData.time,
+          state: eventData.location.state,
+          city: eventData.location.city,
+          type: eventData.type,
+          participant_ids: [eventData.creatorId],
+          requires_approval: eventData.requiresApproval || false,
+        })
+        .select()
+        .single();
+
+      if (error) throw new Error(error.message);
+      return mapEvent(data);
+    },
+
+    join: async (eventId: number, userId: string) => {
+      const { data: event } = await supabase
+        .from('events')
+        .select('participant_ids')
+        .eq('id', eventId)
+        .single();
+
+      if (!event) throw new Error('Event not found');
+
+      const participantIds = event.participant_ids || [];
+      const newParticipants = participantIds.includes(userId)
+        ? participantIds.filter((id: string) => id !== userId)
+        : [...participantIds, userId];
+
+      await supabase
+        .from('events')
+        .update({ participant_ids: newParticipants })
+        .eq('id', eventId);
+
+      return true;
+    },
+
+    getComments: async (eventId: number): Promise<EventComment[]> => {
+      const { data, error } = await supabase
+        .from('event_comments')
+        .select('*, profile:profiles(*)')
+        .eq('event_id', eventId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw new Error(error.message);
+      return data || [];
+    },
+
+    addComment: async (commentData: any): Promise<EventComment> => {
+      const { data, error } = await supabase
+        .from('event_comments')
+        .insert({
+          event_id: commentData.event_id,
+          user_id: commentData.user_id,
+          text: commentData.text,
+        })
+        .select('*, profile:profiles(*)')
+        .single();
+
+      if (error) throw new Error(error.message);
+      return data;
+    },
+  },
+
+  messages: {
+    list: async (userId: string) => {
+      const { data, error } = await supabase
+        .from('direct_messages')
+        .select('*')
+        .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+        .order('created_at', { ascending: true });
+
+      if (error) throw new Error(error.message);
+
+      return data.map((msg: any) => ({
+        id: msg.id,
+        senderId: msg.sender_id,
+        receiverId: msg.receiver_id,
+        text: msg.text,
+        audioUrl: msg.audio_url,
+        timestamp: msg.created_at,
+        read: msg.read,
+      }));
+    },
+
+    send: async (messageData: any) => {
+      const { data, error } = await supabase
+        .from('direct_messages')
+        .insert({
+          sender_id: messageData.senderId,
+          receiver_id: messageData.receiverId,
+          text: messageData.text,
+          audio_url: messageData.audioUrl,
+        })
+        .select()
+        .single();
+
+      if (error) throw new Error(error.message);
+
+      return {
+        id: data.id,
+        senderId: data.sender_id,
+        receiverId: data.receiver_id,
+        text: data.text,
+        audioUrl: data.audio_url,
+        timestamp: data.created_at,
+        read: false,
+      };
+    },
+  },
+
+  music: {
+    search: async (query: string) => {
+      // TODO: Implementar busca de música
+      return [];
+    },
+  },
+
+  storage: {
+    uploadAvatar: async (userId: string, file: File) => {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}-${Date.now()}.${fileExt}`;
+
+      const { data, error } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file);
+
+      if (error) throw new Error(error.message);
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    },
+
+    uploadPostImage: async (userId: string, file: File) => {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}-${Date.now()}.${fileExt}`;
+
+      const { data, error } = await supabase.storage
+        .from('posts')
+        .upload(fileName, file);
+
+      if (error) throw new Error(error.message);
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('posts')
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    },
+  },
+
+  data: {
+    getRecipes: async () => RECEITAS_DATABASE,
+    getExercises: async () => EXERCICIOS_DATABASE,
+    getProfessionals: async () => PROFESSIONALS_DATABASE,
+  },
 };

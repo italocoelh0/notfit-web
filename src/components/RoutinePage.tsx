@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { UserData, UITexts, DashboardSection, Recipe, Exercise } from '../types';
 import RoutineSelectionPage from './RoutineSelectionPage';

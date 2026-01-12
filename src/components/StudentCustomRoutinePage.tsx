@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { UserData, UITexts, DashboardSection, Recipe, Exercise } from '../types';
 import ActiveRoutinePage from './ActiveRoutinePage';
-import { motion } from 'framer-motion';
+import AlimentacaoPage from './AlimentacaoPage';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface StudentCustomRoutinePageProps {
   userData: UserData;
@@ -36,7 +37,7 @@ const WaitingForProfessional: React.FC<{ onBack: () => void; type: 'workout' | '
                 >
                     <i className="fa-solid fa-arrow-left"></i>
                 </button>
-                <span className="font-anton uppercase tracking-wider text-lg text-white">Voltar</span>
+                <span className="font-anton uppercase tracking-wider text-lg text-white">AGUARDE</span>
              </div>
 
              <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] bg-yellow-500/10 rounded-full filter blur-[150px] opacity-30"></div>
@@ -115,9 +116,27 @@ const HubCard: React.FC<{
 
 const StudentCustomRoutinePage: React.FC<StudentCustomRoutinePageProps> = ({
   userData,
-  setActiveSection
+  onUpdateUserData,
+  setActiveSection,
+  onSendNotification,
+  recipes,
+  onUpdateRecipe,
+  onAddRecipe,
+  onDeleteRecipe,
+  isEditMode,
+  uiTexts,
+  onUpdateUiText
 }) => {
   const [view, setView] = useState<'hub' | 'training' | 'diet'>('hub');
+
+  // Handle reset inside training view (mostly for demo/dev)
+  const handleResetRoutine = async () => {
+    const success = await onUpdateUserData({ routine: undefined });
+    if (success) {
+      onSendNotification("Rotina resetada.");
+      setView('hub');
+    }
+  };
 
   // 1. Training View
   if (view === 'training') {
@@ -131,18 +150,14 @@ const StudentCustomRoutinePage: React.FC<StudentCustomRoutinePageProps> = ({
                 <button onClick={() => setView('hub')} className="w-8 h-8 flex items-center justify-center bg-surface-100 rounded-full text-white hover:bg-primary hover:text-white transition-colors">
                     <i className="fa-solid fa-arrow-left"></i>
                 </button>
-                <div className="flex-1">
-                    <span className="font-anton uppercase tracking-wider text-lg block leading-none">Meu Treino</span>
-                    <span className="text-[10px] text-green-500 font-bold uppercase tracking-widest">Consultoria Ativa</span>
-                </div>
+                <span className="font-anton uppercase tracking-wider text-lg">Meu Treino</span>
             </div>
-            {/* onReset is NOT passed here, so the student cannot reset the plan */}
-            <ActiveRoutinePage routine={userData.routine} viewType="workout" />
+            <ActiveRoutinePage routine={userData.routine} onReset={handleResetRoutine} viewType="workout" />
         </div>
       );
   }
 
-  // 2. Diet View
+  // 2. Diet View - STANDARDIZED to look exactly like Training View
   if (view === 'diet') {
       if (!userData.routine) {
           return <WaitingForProfessional onBack={() => setView('hub')} type="diet" />;
@@ -154,13 +169,10 @@ const StudentCustomRoutinePage: React.FC<StudentCustomRoutinePageProps> = ({
                 <button onClick={() => setView('hub')} className="w-8 h-8 flex items-center justify-center bg-surface-100 rounded-full text-white hover:bg-primary hover:text-white transition-colors">
                     <i className="fa-solid fa-arrow-left"></i>
                 </button>
-                <div className="flex-1">
-                    <span className="font-anton uppercase tracking-wider text-lg block leading-none">Minha Dieta</span>
-                    <span className="text-[10px] text-green-500 font-bold uppercase tracking-widest">Consultoria Ativa</span>
-                </div>
+                <span className="font-anton uppercase tracking-wider text-lg">Meu Plano Alimentar</span>
             </div>
-            {/* onReset is NOT passed here, so the student cannot reset the plan */}
-            <ActiveRoutinePage routine={userData.routine} viewType="diet" />
+            {/* Uses ActiveRoutinePage for standardized view */}
+            <ActiveRoutinePage routine={userData.routine} onReset={handleResetRoutine} viewType="diet" />
         </div>
       );
   }

@@ -4,8 +4,9 @@
 import React, { useState } from 'react';
 import { UserData } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
+import { createCheckoutSession, FlamePackage } from '../services/paymentsService';
 
-const FLAME_PACKS = [
+const FLAME_PACKS: FlamePackage[] = [
     { id: 1, amount: 12, price: 1.50, label: 'Pack Iniciante', popular: false },
     { id: 2, amount: 70, price: 6.90, label: 'Pack Evolução', popular: true },
     { id: 3, amount: 350, price: 33.90, label: 'Pack Pro', popular: false },
@@ -114,17 +115,33 @@ const FlamePackCard: React.FC<{
 
 
 const FlamesStorePage: React.FC<{ userData: UserData; onUpdateUserData: (updates: Partial<UserData>) => Promise<boolean>; onSendNotification: (message: string) => void; }> = ({ userData, onUpdateUserData, onSendNotification }) => {
-    const [selectedPack, setSelectedPack] = useState<typeof FLAME_PACKS[0] | null>(null);
+    const [selectedPack, setSelectedPack] = useState<FlamePackage | null>(null);
+    const [isProcessing, setIsProcessing] = useState(false);
 
-    const handleBuyFlames = () => {
-        if (!selectedPack) return;
+    const handleBuyFlames = async () => {
+        if (!selectedPack || isProcessing) return;
 
-        onUpdateUserData({ flameBalance: userData.flameBalance + selectedPack.amount }).then(success => {
-            if (success) {
-                onSendNotification(`🔥 ${selectedPack.amount} Flames adicionadas com sucesso!`);
-                setSelectedPack(null);
-            }
-        });
+        setIsProcessing(true);
+        
+        try {
+            // Cria sessão de checkout no Stripe
+            const { url } = await createCheckoutSession(
+                userData.id,
+                selectedPack,
+                userData.email
+            );
+
+            // Abre o checkout do Stripe em nova aba
+            window.open(url, '_blank');
+            
+            onSendNotification('🔥 Redirecionando para o pagamento...');
+            setSelectedPack(null);
+        } catch (error) {
+            console.error('Erro ao criar checkout:', error);
+            onSendNotification('❌ Erro ao processar pagamento. Tente novamente.');
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     return (

@@ -6,7 +6,7 @@ import { Logo } from '../components/Logo';
 import { motion } from 'framer-motion';
 
 interface LoginPageProps {
-  onLogin: (email: string, password: string) => Promise<void>;
+  onLogin: (email: string, password: string, rememberMe: boolean) => Promise<void>;
   onNavigateToRegister: () => void;
   onNavigateToForgotPassword: () => void;
   isEditMode: boolean;
@@ -17,6 +17,7 @@ interface LoginPageProps {
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onNavigateToRegister, onNavigateToForgotPassword, isEditMode, uiTexts, onUpdateUiText }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,7 +26,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onNavigateToRegister, on
     setLoading(true);
     setError(null);
     try {
-      await onLogin(email, password);
+      await onLogin(email, password, rememberMe);
     } catch (err: any) {
       let msg = err.message;
       if (msg === 'Invalid login credentials') {
@@ -37,12 +38,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onNavigateToRegister, on
     }
   };
   
-  // --- DEV MODE BUTTON ---
   const handleDevLogin = async () => {
       setLoading(true);
       try {
-          // E-mail do usuário fake configurado em services/api.ts
-          await onLogin('dev@nowfit.com', 'anypass'); 
+          await onLogin('dev@nowfit.com', 'anypass', true); 
       } catch (err) {
           console.error(err);
           setError("Erro no login de desenvolvedor.");
@@ -51,102 +50,119 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onNavigateToRegister, on
       }
   }
   
-  // Aumentei o contraste do fundo do input para garantir legibilidade sobre o vídeo sem o card
-  const inputStyles = "w-full px-4 py-3 bg-black/50 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all backdrop-blur-md";
+  // Estilo "Glass" sofisticado para inputs
+  const inputStyles = "w-full px-5 py-4 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl text-white placeholder-white/30 focus:border-primary/50 focus:bg-black/60 focus:ring-1 focus:ring-primary/50 focus:outline-none transition-all text-sm shadow-inner";
   
   const texts = uiTexts.login;
 
   return (
     <div className="min-h-screen w-full bg-black flex items-center justify-center p-4 relative overflow-hidden">
-       {/* Video Background */}
+       {/* Video Background com Overlay Gradiente */}
        <div className="absolute top-0 left-0 w-full h-full z-0 overflow-hidden">
-          <div className="absolute inset-0 bg-black/50 z-10"></div> {/* Overlay ajustado */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black z-10"></div>
           <video 
             autoPlay 
             loop 
             muted 
             playsInline 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover opacity-60"
           >
-            <source src="https://imgur.com/cumtqQ0.mp4" type="video/mp4" />
-            Seu navegador não suporta vídeos.
+            <source src="https://mixqpdnwgbeqwxsnubxx.supabase.co/storage/v1/object/public/logo/video.mp4" type="video/mp4" />
           </video>
        </div>
        
-       {/* BOTÃO SECRETO DE DEV - RESTAURADO E VISIVEL */}
        <button 
            onClick={handleDevLogin}
-           className="fixed top-4 right-4 z-50 bg-red-600/50 hover:bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase backdrop-blur-md transition-all border border-red-400 shadow-lg"
-           title="Clique para entrar como desenvolvedor"
+           className="fixed top-safe right-4 z-50 bg-white/5 hover:bg-white/10 text-white/50 hover:text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase backdrop-blur-md transition-all border border-white/5"
        >
-           🔓 Dev Login
+           Dev Access
        </button>
 
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="max-w-sm w-full p-4 relative z-20 flex flex-col items-center mb-10 -mt-20"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="max-w-sm w-full p-6 relative z-20 flex flex-col items-center"
       >
-        <div className="text-center mb-6 w-full">
-            <div className="flex justify-center mb-0">
+        <div className="text-center mb-10 w-full">
+            <div className="flex justify-center mb-4">
               <Logo
-                src="https://imgur.com/6GhoZ4K.png"
-                className="h-[20rem] w-auto drop-shadow-[0_0_25px_rgba(252,82,0,0.4)]"
+                src="https://mixqpdnwgbeqwxsnubxx.supabase.co/storage/v1/object/public/logo/582255859_3086579074848471_4873069475124875843_n.png"
+                className="h-24 w-auto drop-shadow-2xl"
                 animated={true}
               />
             </div>
-            <div className="-mt-16 relative z-10">
+            <div>
+               <h1 className="font-anton text-4xl text-white uppercase tracking-widest drop-shadow-lg mb-2">NowFit</h1>
                <EditableField 
                   as="p" 
                   isEditing={isEditMode} 
                   value={texts.subtitle} 
                   onChange={v => onUpdateUiText('login', 'subtitle', v)} 
-                  className="font-sans text-lg font-medium text-white/90 tracking-wide drop-shadow-md" 
+                  className="text-xs font-medium text-gray-300 tracking-[0.2em] uppercase opacity-80" 
                />
             </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5 w-full">
+        <form onSubmit={handleSubmit} className="space-y-4 w-full">
           {error && (
             <motion.div 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-red-200 text-sm text-center bg-red-500/20 border border-red-500/30 p-3 rounded-lg backdrop-blur-md"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="text-red-300 text-xs text-center bg-red-500/10 border border-red-500/20 p-3 rounded-xl backdrop-blur-md"
             >
+                <i className="fa-solid fa-circle-exclamation mr-2"></i>
                 {error}
             </motion.div>
           )}
           
-          <div>
-            <input 
-              type="email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required 
-              placeholder={texts.emailLabel}
-              className={inputStyles}
-              disabled={loading}
-            />
+          <div className="space-y-4">
+            <div className="relative group">
+                <i className="fa-regular fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-primary transition-colors"></i>
+                <input 
+                  type="email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required 
+                  placeholder={texts.emailLabel}
+                  className={`${inputStyles} pl-12`}
+                  disabled={loading}
+                />
+            </div>
+            <div className="relative group">
+                <i className="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-primary transition-colors"></i>
+                <input 
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)} 
+                  required 
+                  placeholder={texts.passwordLabel}
+                  className={`${inputStyles} pl-12`}
+                  disabled={loading}
+                />
+            </div>
           </div>
-          <div>
-            <input 
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)} 
-              required 
-              placeholder={texts.passwordLabel}
-              className={inputStyles}
-              disabled={loading}
-            />
-          </div>
-          <div className="text-right -mt-2">
+
+          <div className="flex items-center justify-between pt-2">
+              <label className="flex items-center gap-2 cursor-pointer group">
+                  <div className="relative flex items-center justify-center w-5 h-5 rounded border border-white/30 bg-white/5 transition-all group-hover:border-white/50">
+                      <input 
+                          type="checkbox" 
+                          checked={rememberMe}
+                          onChange={(e) => setRememberMe(e.target.checked)}
+                          className="peer appearance-none absolute inset-0 w-full h-full cursor-pointer"
+                      />
+                      {rememberMe && <i className="fa-solid fa-check text-primary text-[10px]"></i>}
+                  </div>
+                  <span className="text-xs text-gray-400 group-hover:text-white transition-colors">Lembrar de mim</span>
+              </label>
+
               <button 
                   type="button" 
                   onClick={onNavigateToForgotPassword} 
-                  className="text-xs font-semibold text-white/80 hover:text-primary hover:underline transition-colors drop-shadow-md"
+                  className="text-xs text-gray-400 hover:text-primary transition-colors"
               >
-                  Esqueci minha senha
+                  Esqueceu a senha?
               </button>
           </div>
           
@@ -154,55 +170,20 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onNavigateToRegister, on
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             type="submit" 
-            className="w-full bg-gradient-to-r from-primary to-flames text-white font-bold py-3.5 rounded-xl text-base shadow-[0_0_20px_theme(colors.primary/30%)] hover:shadow-[0_0_30px_theme(colors.primary/50%)] transition-all disabled:opacity-50 disabled:cursor-not-allowed !mt-6 font-anton tracking-wide uppercase" 
+            className="w-full bg-primary text-white font-bold py-4 rounded-2xl text-sm shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-6 font-anton tracking-widest uppercase" 
             disabled={loading}
           >
-            {loading ? 'Entrando...' : <EditableField as="span" isEditing={isEditMode} value={texts.loginButton} onChange={v => onUpdateUiText('login', 'loginButton', v)} />}
+            {loading ? <i className="fa-solid fa-circle-notch fa-spin"></i> : <EditableField as="span" isEditing={isEditMode} value={texts.loginButton} onChange={v => onUpdateUiText('login', 'loginButton', v)} />}
           </motion.button>
         </form>
         
-        <div className="text-center text-gray-300 text-sm mt-8 drop-shadow-md">
-            <EditableField as="span" isEditing={isEditMode} value={texts.registerPrompt} onChange={v => onUpdateUiText('login', 'registerPrompt', v)} />
-            {' '}
-            <button onClick={onNavigateToRegister} className="font-bold text-primary hover:text-flames transition-colors hover:underline">
+        <div className="text-center mt-12">
+            <p className="text-gray-400 text-xs mb-2">Novo por aqui?</p>
+            <button onClick={onNavigateToRegister} className="text-white font-bold text-sm uppercase tracking-widest border-b border-white/20 pb-1 hover:border-primary hover:text-primary transition-all">
                 <EditableField as="span" isEditing={isEditMode} value={texts.registerLink} onChange={v => onUpdateUiText('login', 'registerLink', v)} />
             </button>
         </div>
       </motion.div>
-
-      {/* Social Media Footer */}
-      <div className="absolute bottom-8 left-0 right-0 z-20 flex flex-col items-center gap-3">
-          <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Siga-nos</p>
-          <div className="flex justify-center gap-6">
-            <a 
-                href="https://instagram.com/nowfiton" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-white/40 hover:text-[#E1306C] transition-all duration-300 transform hover:scale-110"
-                aria-label="Instagram"
-            >
-                <i className="fa-brands fa-instagram text-2xl"></i>
-            </a>
-            <a 
-                href="https://facebook.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-white/40 hover:text-[#1877F2] transition-all duration-300 transform hover:scale-110"
-                aria-label="Facebook"
-            >
-                <i className="fa-brands fa-facebook text-2xl"></i>
-            </a>
-            <a 
-                href="https://youtube.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-white/40 hover:text-[#FF0000] transition-all duration-300 transform hover:scale-110"
-                aria-label="YouTube"
-            >
-                <i className="fa-brands fa-youtube text-2xl"></i>
-            </a>
-          </div>
-      </div>
     </div>
   );
 };

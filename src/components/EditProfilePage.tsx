@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { UserData, UITexts } from '../types';
 import EditableField from './EditableField';
 import { ADVENTURE_ACTIVITIES } from '../constants';
-import { api } from '@services/api';
+import { api } from '../services/api';
 
 interface EditProfilePageProps {
     userData: UserData;
@@ -172,4 +172,3 @@ const EditProfilePage: React.FC<EditProfilePageProps> = ({ userData, onUpdateUse
 };
 
 export default EditProfilePage;
-

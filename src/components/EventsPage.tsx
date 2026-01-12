@@ -16,7 +16,7 @@ interface GroupData {
     category?: string;
 }
 
-export interface SocialPageProps {
+interface SocialPageProps {
   events: EventData[];
   currentUser: UserData;
   onJoinEvent: (eventId: number) => void;
@@ -320,6 +320,7 @@ const SocialHubCard: React.FC<{
     </motion.div>
 );
 
+// --- Competitions Component ---
 const CompetitionsView: React.FC<{ onBack: () => void; currentUser: UserData; onCreate: (data: any) => void; allUsers?: UserData[] }> = ({ onBack, currentUser, onCreate, allUsers }) => {
     const [step, setStep] = useState<'list' | 'create_1' | 'create_2' | 'create_3' | 'dashboard'>('list');
     // State for viewing an existing competition
