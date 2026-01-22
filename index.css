@@ -1,0 +1,57 @@
+/* Base styles for NowFit application */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles defined in index.html moved here */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #1E1E1E;
+}
+::-webkit-scrollbar-thumb {
+  background: #FC5200;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #E04800;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.flame-glow {
+  filter: drop-shadow(0 0 12px rgba(255, 107, 53, 0.5));
+}
+
+/* Mobile App Optimizations */
+body {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  overscroll-behavior-y: none; /* Prevents pull-to-refresh on mobile web */
+}
+
+input, textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Safe Area Utilities */
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.h-safe-screen {
+  height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}
+.min-h-safe-screen {
+  min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}

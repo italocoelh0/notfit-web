@@ -55,7 +55,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onNavigateToRegister, on
             playsInline 
             className="w-full h-full object-cover opacity-60"
           >
-            <source src="https://mixqpdnwgbeqwxsnubxx.supabase.co/storage/v1/object/public/logo/video.mp4" type="video/mp4" />
+            <source src="https://ckdkpjzswtjhdowapmzu.supabase.co/storage/v1/object/public/logo/video.mp4" type="video/mp4" />
           </video>
        </div>
 
@@ -68,7 +68,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onNavigateToRegister, on
         <div className="text-center mb-10 w-full">
             <div className="flex justify-center mb-4">
               <Logo
-                src="https://mixqpdnwgbeqwxsnubxx.supabase.co/storage/v1/object/public/logo/582255859_3086579074848471_4873069475124875843_n.png"
+                src="https://ckdkpjzswtjhdowapmzu.supabase.co/storage/v1/object/public/logo/582255859_3086579074848471_4873069475124875843_n.png"
                 className="h-24 w-auto drop-shadow-2xl"
                 animated={true}
               />

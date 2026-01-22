@@ -220,7 +220,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onRegister, onNavigateToLog
             playsInline 
             className="w-full h-full object-cover"
           >
-            <source src="https://mixqpdnwgbeqwxsnubxx.supabase.co/storage/v1/object/public/logo/video.mp4" type="video/mp4" />
+            <source src="https://ckdkpjzswtjhdowapmzu.supabase.co/storage/v1/object/public/logo/video.mp4" type="video/mp4" />
           </video>
        </div>
 
