@@ -39,43 +39,57 @@ export async function createCheckoutSession(
   flamePackage: FlamePackage,
   userEmail: string
 ): Promise<CheckoutSessionResponse> {
+  console.log('🔥 createCheckoutSession iniciado');
+  console.log('🔥 PAYMENTS_API_BASE_URL:', PAYMENTS_API_BASE_URL);
+  console.log('🔥 Dados recebidos:', { userId, flamePackage, userEmail });
+  
+  const requestBody = {
+    lineItems: [
+      {
+        price_data: {
+          currency: 'brl',
+          product_data: {
+            name: `${flamePackage.amount} Flames - ${flamePackage.label}`,
+            description: `Pacote de ${flamePackage.amount} Flames para o NowFit`,
+            images: ['https://i.imgur.com/your-flame-image.png'], // Substitua pela URL da sua imagem
+          },
+          unit_amount: Math.round(flamePackage.price * 100), // Converte para centavos
+        },
+        quantity: 1,
+      },
+    ],
+    successUrl: 'https://notfit-web.vercel.app?payment=success',
+    cancelUrl: 'https://notfit-web.vercel.app?payment=cancelled',
+    metadata: {
+      userId: userId,
+      flameAmount: flamePackage.amount.toString(),
+      packageId: flamePackage.id.toString(),
+      type: 'flame_purchase',
+    },
+  };
+  
+  console.log('🔥 Request body:', requestBody);
+  
   const response = await fetch(`${PAYMENTS_API_BASE_URL}/payments/checkout`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      lineItems: [
-        {
-          price_data: {
-            currency: 'brl',
-            product_data: {
-              name: `${flamePackage.amount} Flames - ${flamePackage.label}`,
-              description: `Pacote de ${flamePackage.amount} Flames para o NowFit`,
-              images: ['https://i.imgur.com/your-flame-image.png'], // Substitua pela URL da sua imagem
-            },
-            unit_amount: Math.round(flamePackage.price * 100), // Converte para centavos
-          },
-          quantity: 1,
-        },
-      ],
-      successUrl: `${window.location.origin}?payment=success`,
-      cancelUrl: `${window.location.origin}?payment=cancelled`,
-      metadata: {
-        userId: userId,
-        flameAmount: flamePackage.amount.toString(),
-        packageId: flamePackage.id.toString(),
-        type: 'flame_purchase',
-      },
-    }),
+    body: JSON.stringify(requestBody),
   });
+
+  console.log('🔥 Response status:', response.status);
+  console.log('🔥 Response ok:', response.ok);
 
   if (!response.ok) {
     const error = await response.json();
+    console.error('🔥 Erro da API:', error);
     throw new Error(error.message || 'Falha ao criar sessão de checkout');
   }
 
-  return response.json();
+  const result = await response.json();
+  console.log('🔥 Response data:', result);
+  return result;
 }
 
 /**

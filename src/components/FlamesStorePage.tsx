@@ -119,11 +119,26 @@ const FlamesStorePage: React.FC<{ userData: UserData; onUpdateUserData: (updates
     const [isProcessing, setIsProcessing] = useState(false);
 
     const handleBuyFlames = async () => {
-        if (!selectedPack || isProcessing) return;
+        console.log('🔥 handleBuyFlames iniciado');
+        console.log('🔥 selectedPack:', selectedPack);
+        console.log('🔥 isProcessing:', isProcessing);
+        console.log('🔥 userData:', userData);
+        
+        if (!selectedPack || isProcessing) {
+            console.log('🔥 Retorno precoce: selectedPack ou isProcessing inválido');
+            return;
+        }
 
+        console.log('🔥 Iniciando processamento...');
         setIsProcessing(true);
         
         try {
+            console.log('🔥 Chamando createCheckoutSession com:', {
+                userId: userData.id,
+                selectedPack,
+                userEmail: userData.email
+            });
+            
             // Cria sessão de checkout no Stripe
             const { url } = await createCheckoutSession(
                 userData.id,
@@ -131,15 +146,26 @@ const FlamesStorePage: React.FC<{ userData: UserData; onUpdateUserData: (updates
                 userData.email
             );
 
+            console.log('🔥 URL recebida:', url);
+
             // Abre o checkout do Stripe em nova aba
-            window.open(url, '_blank');
+            console.log('🔥 Abrindo nova aba com URL:', url);
+            const newWindow = window.open(url, '_blank');
+            
+            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                console.log('🔥 Popup bloqueado, redirecionando na mesma aba');
+                window.location.href = url;
+            } else {
+                console.log('🔥 Nova aba aberta com sucesso');
+            }
             
             onSendNotification('🔥 Redirecionando para o pagamento...');
             setSelectedPack(null);
         } catch (error) {
-            console.error('Erro ao criar checkout:', error);
+            console.error('❌ Erro ao criar checkout:', error);
             onSendNotification('❌ Erro ao processar pagamento. Tente novamente.');
         } finally {
+            console.log('🔥 Finalizando processamento');
             setIsProcessing(false);
         }
     };

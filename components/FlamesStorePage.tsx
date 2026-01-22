@@ -6,7 +6,7 @@ import { UserData } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createCheckoutSession } from '../src/services/paymentsService';
 
-const FLAME_PACKS = [
+const FLAME_PACKS: FlamePackage[] = [
     { id: 1, amount: 12, price: 1.50, label: 'Pack Iniciante', popular: false },
     { id: 2, amount: 70, price: 6.90, label: 'Pack Evolução', popular: true },
     { id: 3, amount: 350, price: 33.90, label: 'Pack Pro', popular: false },
@@ -16,10 +16,9 @@ interface ConfirmPurchaseModalProps {
     pack: typeof FLAME_PACKS[0];
     onClose: () => void;
     onConfirm: () => void;
-    isLoading: boolean;
 }
 
-const ConfirmPurchaseModal: React.FC<ConfirmPurchaseModalProps> = ({ pack, onClose, onConfirm, isLoading }) => (
+const ConfirmPurchaseModal: React.FC<ConfirmPurchaseModalProps> = ({ pack, onClose, onConfirm }) => (
     <motion.div 
         className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm"
         initial={{ opacity: 0 }} 
@@ -53,22 +52,14 @@ const ConfirmPurchaseModal: React.FC<ConfirmPurchaseModalProps> = ({ pack, onClo
 
             <div className="space-y-3">
                 <button 
-                    disabled={isLoading}
-                    className="w-full bg-primary text-white font-anton uppercase tracking-widest text-sm py-4 rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+                    onClick={onConfirm}
+                    className="w-full bg-primary text-white font-anton uppercase tracking-widest text-sm py-4 rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform"
                 >
-                    {isLoading ? (
-                        <>
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                            Processando...
-                        </>
-                    ) : (
-                        'Confirmar Pagamento'
-                    )}
+                    Confirmar Pagamento
                 </button>
                 <button 
                     onClick={onClose}
-                    disabled={isLoading}
-                    className="w-full text-xs text-gray-500 hover:text-white uppercase tracking-widest font-bold py-3 transition-colors disabled:opacity-50"
+                    className="w-full text-xs text-gray-500 hover:text-white uppercase tracking-widest font-bold py-3 transition-colors"
                 >
                     Cancelar
                 </button>
@@ -124,29 +115,58 @@ const FlamePackCard: React.FC<{
 
 
 const FlamesStorePage: React.FC<{ userData: UserData; onUpdateUserData: (updates: Partial<UserData>) => Promise<boolean>; onSendNotification: (message: string) => void; }> = ({ userData, onUpdateUserData, onSendNotification }) => {
-    const [selectedPack, setSelectedPack] = useState<typeof FLAME_PACKS[0] | null>(null);
+    const [selectedPack, setSelectedPack] = useState<FlamePackage | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
 
     const handleBuyFlames = async () => {
-        if (!selectedPack || isProcessing) return;
+        console.log('🔥 handleBuyFlames iniciado');
+        console.log('🔥 selectedPack:', selectedPack);
+        console.log('🔥 isProcessing:', isProcessing);
+        console.log('🔥 userData:', userData);
+        
+        if (!selectedPack || isProcessing) {
+            console.log('🔥 Retorno precoce: selectedPack ou isProcessing inválido');
+            return;
+        }
 
+        console.log('🔥 Iniciando processamento...');
         setIsProcessing(true);
         
         try {
-            // Criar sessão de checkout no Stripe via backend
+            console.log('🔥 Chamando createCheckoutSession com:', {
+                userId: userData.id,
+                selectedPack,
+                userEmail: userData.email
+            });
+            
+            // Cria sessão de checkout no Stripe
             const { url } = await createCheckoutSession(
                 userData.id,
                 selectedPack,
                 userData.email
             );
 
-            // Redirecionar para o Stripe Checkout
-            window.location.href = url;
-        } catch (error: any) {
-            console.error('Erro ao criar checkout:', error);
-            onSendNotification(`❌ Erro ao processar pagamento: ${error.message || 'Tente novamente'}`);
-            setIsProcessing(false);
+            console.log('🔥 URL recebida:', url);
+
+            // Abre o checkout do Stripe em nova aba
+            console.log('🔥 Abrindo nova aba com URL:', url);
+            const newWindow = window.open(url, '_blank');
+            
+            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                console.log('🔥 Popup bloqueado, redirecionando na mesma aba');
+                window.location.href = url;
+            } else {
+                console.log('🔥 Nova aba aberta com sucesso');
+            }
+            
+            onSendNotification('🔥 Redirecionando para o pagamento...');
             setSelectedPack(null);
+        } catch (error) {
+            console.error('❌ Erro ao criar checkout:', error);
+            onSendNotification('❌ Erro ao processar pagamento. Tente novamente.');
+        } finally {
+            console.log('🔥 Finalizando processamento');
+            setIsProcessing(false);
         }
     };
 
@@ -179,8 +199,7 @@ const FlamesStorePage: React.FC<{ userData: UserData; onUpdateUserData: (updates
             </div>
 
             {/* Store List */}
-            <div className="relative z-10 px-4 spac
-                        isLoading={isProcessing}-y-4 max-w-md mx-auto">
+            <div className="relative z-10 px-4 space-y-4 max-w-md mx-auto">
                 <p className="text-xs text-gray-500 uppercase tracking-widest font-bold ml-2 mb-2">Pacotes Disponíveis</p>
                 {FLAME_PACKS.map(pack => (
                     <FlamePackCard 
@@ -203,8 +222,7 @@ const FlamesStorePage: React.FC<{ userData: UserData; onUpdateUserData: (updates
                     <ConfirmPurchaseModal 
                         pack={selectedPack} 
                         onClose={() => setSelectedPack(null)} 
-                        onConfirm={handleBuyFlames}
-                        isLoading={isProcessing}
+                        onConfirm={handleBuyFlames} 
                     />
                 )}
             </AnimatePresence>
