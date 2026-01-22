@@ -11,14 +11,25 @@ interface ExerciseCardProps {
   onSelect: (exercise: Exercise) => void;
 }
 
-const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, isSelected, onSelect }) => (
+const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, isSelected, onSelect }) => {
+    // Determinar a URL do thumbnail
+    const getThumbnailUrl = () => {
+        if (exercise.videoUrl) {
+            // Para vídeos diretos, não temos thumbnail específico
+            return '/api/placeholder/320/180';
+        }
+        // Thumbnail do YouTube
+        return `https://img.youtube.com/vi/${exercise.videoId}/hqdefault.jpg`;
+    };
+
+    return (
     <div
         onClick={() => onSelect(exercise)}
         className={`bg-surface-100 rounded-lg overflow-hidden border-2 cursor-pointer transition-all duration-300 hover:border-surface-300
         ${isSelected ? 'border-primary' : 'border-surface-200'}`}
     >
         <div className="aspect-video bg-black relative">
-            <img src={`https://img.youtube.com/vi/${exercise.videoId}/hqdefault.jpg`} alt={exercise.nome} className="w-full h-full object-cover"/>
+            <img src={getThumbnailUrl()} alt={exercise.nome} className="w-full h-full object-cover"/>
              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
               {isSelected && (
                 <div className="absolute top-2 right-2 bg-primary text-white w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">
@@ -34,7 +45,8 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, isSelected, onSel
             </div>
         </div>
     </div>
-);
+    );
+};
 
 
 interface ExerciseSelectionPageProps {

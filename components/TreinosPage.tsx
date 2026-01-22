@@ -3,11 +3,13 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Exercise, MuscleGroup, ExerciseCategory, UITexts, ExerciseLevel, UserData, DashboardSection } from '../types';
 import { AnimatePresence, motion } from 'framer-motion';
 import EditableField from './EditableField';
+import IntegratedVideoPlayer from './IntegratedVideoPlayer';
 import { createManualRoutine } from '../lib/routineService';
 
 const BLANK_EXERCISE: Omit<Exercise, 'id'> = {
     nome: "Novo Exercício",
     videoId: "dQw4w9WgXcQ",
+    videoUrl: "",
     descricao: "Descrição do novo exercício.",
     nivel: "Iniciante",
     duracao: "3x 12",
@@ -66,13 +68,13 @@ const ExerciseModal: React.FC<ExerciseModalProps> = ({ exercise, onClose, isAdmi
                 onClick={(e) => e.stopPropagation()}
                 className="bg-surface-100/90 backdrop-blur-xl border border-white/10 rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
             >
-                <div className="aspect-video bg-black relative">
-                     <iframe
-                        width="100%" height="100%"
-                        src={`https://www.youtube.com/embed/${editedExercise.videoId}?autoplay=1&modestbranding=1&rel=0&controls=0`}
+                <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                    <IntegratedVideoPlayer
+                        videoUrl={editedExercise.videoUrl || `https://www.youtube.com/watch?v=${editedExercise.videoId}`}
                         title={editedExercise.nome}
-                        allowFullScreen className="border-0"
-                    ></iframe>
+                        onClose={() => {}}
+                        autoplay={true}
+                    />
                 </div>
                 <div className="p-6 overflow-y-auto custom-scrollbar">
                     {isAdmin ? (

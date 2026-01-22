@@ -95,13 +95,15 @@ export interface Recipe {
 export interface Exercise {
   id: number;
   nome: string;
-  videoId: string;
+  videoId: string; // Mantido para compatibilidade com YouTube
+  videoUrl?: string; // Nova URL completa para vídeos hospedados
   descricao: string;
   nivel: ExerciseLevel;
   duracao: string;
   calorias: string;
   grupoMuscular: MuscleGroup;
   categoria: ExerciseCategory;
+  isElite?: boolean; // Conteúdo Elite
 }
 
 export interface OnboardingData {

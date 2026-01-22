@@ -109,8 +109,8 @@ const RoutineSelectionPage: React.FC<RoutineSelectionPageProps> = ({
                 <HubCard 
                     onClick={onSelectMyRoutine}
                     icon="🏋️"
-                    title="PLANO DE TREINO"
-                    subtitle="Visualizar treino do dia"
+                    title="Acompanhamento com Profissional"
+                    subtitle="Personal/Nutricionista"
                     highlight={true}
                     bgImage="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1470&auto=format&fit=crop"
                 />
@@ -118,8 +118,8 @@ const RoutineSelectionPage: React.FC<RoutineSelectionPageProps> = ({
                 <HubCard 
                     onClick={() => setActiveSection('custom_routine')}
                     icon="🍱"
-                    title="MINHA DIETA"
-                    subtitle="Planilhas nutricionais"
+                    title="MINHA ROTINA"
+                    subtitle="treinos e dietas"
                     bgImage="https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=1453&auto=format&fit=crop"
                 />
 

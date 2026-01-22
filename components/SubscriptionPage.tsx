@@ -76,6 +76,30 @@ const SubscriptionPage: React.FC<SubscriptionPageProps> = ({ onSkip }) => {
                 {/* Plan Selection Options */}
                 <div className="space-y-3 mb-6 flex-shrink-0">
                     
+                    {/* Premium Básico */}
+                    <div 
+                        onClick={() => setSelectedPlan('premium')}
+                        className={`relative p-4 rounded-xl border transition-all cursor-pointer flex justify-between items-center ${
+                            selectedPlan === 'premium' 
+                            ? 'bg-white/10 border-primary/50 shadow-[0_0_15px_rgba(252,82,0,0.15)]' 
+                            : 'bg-white/5 border-transparent hover:bg-white/10'
+                        }`}
+                    >
+                        <div className="text-left">
+                            <p className={`text-sm font-bold uppercase tracking-wide ${selectedPlan === 'premium' ? 'text-white' : 'text-gray-400'}`}>Premium</p>
+                            <p className="text-[10px] text-gray-500">Treinos e Funções Básicas</p>
+                        </div>
+                        <div className="text-right">
+                            <div className="flex flex-col items-end">
+                                <div className="flex items-start justify-end">
+                                    <span className="text-[10px] mt-1 mr-1 text-gray-400">R$</span>
+                                    <span className={`text-2xl font-anton ${selectedPlan === 'premium' ? 'text-white' : 'text-gray-400'}`}>9,90</span>
+                                </div>
+                                <span className="text-[9px] text-gray-500 -mt-1">/mês</span>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Premium Elite Option */}
                     <div 
                         onClick={() => setSelectedPlan('elite')}
@@ -100,30 +124,6 @@ const SubscriptionPage: React.FC<SubscriptionPageProps> = ({ onSkip }) => {
                                 <span className={`text-2xl font-anton ${selectedPlan === 'elite' ? 'text-white' : 'text-gray-400'}`}>19,90</span>
                             </div>
                             <span className="text-[9px] text-gray-500 block -mt-1">/mês</span>
-                        </div>
-                    </div>
-
-                    {/* Premium Básico */}
-                    <div 
-                        onClick={() => setSelectedPlan('premium')}
-                        className={`relative p-4 rounded-xl border transition-all cursor-pointer flex justify-between items-center ${
-                            selectedPlan === 'premium' 
-                            ? 'bg-white/10 border-primary/50 shadow-[0_0_15px_rgba(252,82,0,0.15)]' 
-                            : 'bg-white/5 border-transparent hover:bg-white/10'
-                        }`}
-                    >
-                        <div className="text-left">
-                            <p className={`text-sm font-bold uppercase tracking-wide ${selectedPlan === 'premium' ? 'text-white' : 'text-gray-400'}`}>Premium</p>
-                            <p className="text-[10px] text-gray-500">Treinos e Funções Básicas</p>
-                        </div>
-                        <div className="text-right">
-                            <div className="flex flex-col items-end">
-                                <div className="flex items-start justify-end">
-                                    <span className="text-[10px] mt-1 mr-1 text-gray-400">R$</span>
-                                    <span className={`text-2xl font-anton ${selectedPlan === 'premium' ? 'text-white' : 'text-gray-400'}`}>9,90</span>
-                                </div>
-                                <span className="text-[9px] text-gray-500 -mt-1">/mês</span>
-                            </div>
                         </div>
                     </div>
 

@@ -1,8 +1,9 @@
 // components/CreateRoutinePage.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Recipe, Exercise } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
+import IntegratedVideoPlayer from './IntegratedVideoPlayer';
 
 interface CreateRoutinePageProps {
   recipes: Recipe[];
@@ -68,10 +69,28 @@ const ExerciseSelectionCard: React.FC<{
   onToggleSelect: (exercise: Exercise) => void;
   onViewVideo: (exercise: Exercise) => void;
 }> = ({ exercise, isSelected, onToggleSelect, onViewVideo }) => {
+  // Determinar a URL do vídeo e thumbnail
+  const getVideoUrl = () => {
+    if (exercise.videoUrl) {
+      return exercise.videoUrl;
+    }
+    // Compatibilidade com YouTube antigo
+    return `https://www.youtube.com/watch?v=${exercise.videoId}`;
+  };
+
+  const getThumbnailUrl = () => {
+    if (exercise.videoUrl) {
+      // Para vídeos diretos, não temos thumbnail específico
+      return '/api/placeholder/320/180';
+    }
+    // Thumbnail do YouTube
+    return `https://img.youtube.com/vi/${exercise.videoId}/mqdefault.jpg`;
+  };
+
   return (
     <div className={`rounded-xl text-left transition-all border-2 overflow-hidden ${isSelected ? 'border-primary shadow-lg shadow-primary/10' : 'bg-surface-100 border-surface-200'}`}>
         <div className="aspect-video bg-black relative">
-             <img src={`https://img.youtube.com/vi/${exercise.videoId}/mqdefault.jpg`} alt={exercise.nome} className="w-full h-full object-cover"/>
+             <img src={getThumbnailUrl()} alt={exercise.nome} className="w-full h-full object-cover"/>
         </div>
         <div className="p-3">
             <h3 className="font-bold text-sm mb-1 truncate">{exercise.nome}</h3>
@@ -222,38 +241,12 @@ const CreateRoutinePage: React.FC<CreateRoutinePageProps> = ({
 
        <AnimatePresence>
         {viewingExercise && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setViewingExercise(null)}
-            className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
-          >
-            <motion.div
-              layout
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={e => e.stopPropagation()}
-              className="bg-surface-100 rounded-xl max-w-2xl w-full"
-            >
-              <div className="p-4 flex justify-between items-center border-b border-surface-200">
-                <h3 className="font-bold text-sm">{viewingExercise.nome}</h3>
-                <button onClick={() => setViewingExercise(null)} className="text-on-surface-secondary hover:text-on-surface text-xl">&times;</button>
-              </div>
-              <div className="aspect-video bg-black">
-                <iframe
-                  width="100%"
-                  height="100%"
-                  src={`https://www.youtube.com/embed/${viewingExercise.videoId}?autoplay=1&modestbranding=1&rel=0`}
-                  title={viewingExercise.nome}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="border-0"
-                ></iframe>
-              </div>
-            </motion.div>
-          </motion.div>
+          <IntegratedVideoPlayer
+            videoUrl={viewingExercise.videoUrl || `https://www.youtube.com/watch?v=${viewingExercise.videoId}`}
+            title={viewingExercise.nome}
+            onClose={() => setViewingExercise(null)}
+            autoplay={true}
+          />
         )}
       </AnimatePresence>
     </div>

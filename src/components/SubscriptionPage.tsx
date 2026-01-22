@@ -65,28 +65,23 @@ const SubscriptionPage: React.FC<SubscriptionPageProps> = ({ onSkip }) => {
                 {/* Plan Selection Options */}
                 <div className="space-y-3 mb-6 flex-shrink-0">
                     
-                    {/* Ultimate Option */}
+                    {/* Mensal Option */}
                     <div 
-                        onClick={() => setSelectedPlan('ultimate')}
-                        className={`relative p-4 rounded-xl border transition-all cursor-pointer flex justify-between items-center ${
-                            selectedPlan === 'ultimate' 
-                            ? 'bg-gradient-to-r from-purple-900/40 to-black/60 border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.25)]' 
+                        onClick={() => setSelectedPlan('monthly')}
+                        className={`p-4 rounded-xl border transition-all cursor-pointer flex justify-between items-center ${
+                            selectedPlan === 'monthly' 
+                            ? 'bg-white/10 border-primary/50 shadow-[0_0_15px_rgba(252,82,0,0.15)]' 
                             : 'bg-white/5 border-transparent hover:bg-white/10'
                         }`}
                     >
-                        {selectedPlan === 'ultimate' && (
-                            <div className="absolute -top-2 left-4 bg-purple-500 text-white text-[9px] font-bold uppercase px-2 py-0.5 rounded-full tracking-wide shadow-sm flex items-center gap-1">
-                                <i className="fa-solid fa-crown text-[8px]"></i> Completo
-                            </div>
-                        )}
                         <div className="text-left">
-                            <p className={`text-sm font-bold uppercase tracking-wide ${selectedPlan === 'ultimate' ? 'text-white' : 'text-gray-400'}`}>Ultimate</p>
-                            <p className="text-[10px] text-gray-500">Personal + Nutri + App</p>
+                            <p className={`text-sm font-bold uppercase tracking-wide ${selectedPlan === 'monthly' ? 'text-white' : 'text-gray-400'}`}>Mensal</p>
+                            <p className="text-[10px] text-gray-500">App Completo</p>
                         </div>
                         <div className="text-right">
                             <div className="flex items-start justify-end">
-                                <span className="text-[10px] mt-1 mr-1 text-gray-400">R$</span>
-                                <span className={`text-2xl font-anton ${selectedPlan === 'ultimate' ? 'text-white' : 'text-gray-400'}`}>259,99</span>
+                                <span className="text-xs mt-1 mr-1 text-gray-400">R$</span>
+                                <span className={`text-2xl font-anton ${selectedPlan === 'monthly' ? 'text-white' : 'text-gray-400'}`}>15,90</span>
                             </div>
                             <span className="text-[9px] text-gray-500 block -mt-1">/mês</span>
                         </div>
@@ -121,23 +116,28 @@ const SubscriptionPage: React.FC<SubscriptionPageProps> = ({ onSkip }) => {
                         </div>
                     </div>
 
-                    {/* Mensal Option */}
+                    {/* Ultimate Option */}
                     <div 
-                        onClick={() => setSelectedPlan('monthly')}
-                        className={`p-4 rounded-xl border transition-all cursor-pointer flex justify-between items-center ${
-                            selectedPlan === 'monthly' 
-                            ? 'bg-white/10 border-primary/50 shadow-[0_0_15px_rgba(252,82,0,0.15)]' 
+                        onClick={() => setSelectedPlan('ultimate')}
+                        className={`relative p-4 rounded-xl border transition-all cursor-pointer flex justify-between items-center ${
+                            selectedPlan === 'ultimate' 
+                            ? 'bg-gradient-to-r from-purple-900/40 to-black/60 border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.25)]' 
                             : 'bg-white/5 border-transparent hover:bg-white/10'
                         }`}
                     >
+                        {selectedPlan === 'ultimate' && (
+                            <div className="absolute -top-2 left-4 bg-purple-500 text-white text-[9px] font-bold uppercase px-2 py-0.5 rounded-full tracking-wide shadow-sm flex items-center gap-1">
+                                <i className="fa-solid fa-crown text-[8px]"></i> Completo
+                            </div>
+                        )}
                         <div className="text-left">
-                            <p className={`text-sm font-bold uppercase tracking-wide ${selectedPlan === 'monthly' ? 'text-white' : 'text-gray-400'}`}>Mensal</p>
-                            <p className="text-[10px] text-gray-500">App Completo</p>
+                            <p className={`text-sm font-bold uppercase tracking-wide ${selectedPlan === 'ultimate' ? 'text-white' : 'text-gray-400'}`}>Ultimate</p>
+                            <p className="text-[10px] text-gray-500">Personal + Nutri + App</p>
                         </div>
                         <div className="text-right">
                             <div className="flex items-start justify-end">
-                                <span className="text-xs mt-1 mr-1 text-gray-400">R$</span>
-                                <span className={`text-2xl font-anton ${selectedPlan === 'monthly' ? 'text-white' : 'text-gray-400'}`}>15,90</span>
+                                <span className="text-[10px] mt-1 mr-1 text-gray-400">R$</span>
+                                <span className={`text-2xl font-anton ${selectedPlan === 'ultimate' ? 'text-white' : 'text-gray-400'}`}>259,99</span>
                             </div>
                             <span className="text-[9px] text-gray-500 block -mt-1">/mês</span>
                         </div>

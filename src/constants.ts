@@ -164,7 +164,7 @@ export const RECEITAS_DATABASE: Recipe[] = [
 ];
 
 export const EXERCICIOS_DATABASE: Exercise[] = [
-  { id: 1, nome: 'Supino Reto com Barra', videoId: 'sqOw2YFkiJc', descricao: 'Exercício fundamental para o peitoral maior.', nivel: 'Intermediário', duracao: '4x 8-12', calorias: '~7 cal/min', grupoMuscular: 'Peito', categoria: 'Musculação' },
+  { id: 1, nome: 'Supino Reto com Barra', videoId: 'sqOw2YFkiJc', videoUrl: 'https://vimeo.com/1156043169', descricao: 'Exercício fundamental para o peitoral maior.', nivel: 'Intermediário', duracao: '4x 8-12', calorias: '~7 cal/min', grupoMuscular: 'Peito', categoria: 'Musculação' },
   { id: 2, nome: 'Crucifixo Inclinado', videoId: 'AP_Ju2n_2kE', descricao: 'Foca na porção superior do peitoral.', nivel: 'Intermediário', duracao: '3x 12-15', calorias: '~6 cal/min', grupoMuscular: 'Peito', categoria: 'Musculação' },
   { id: 3, nome: 'Remada Curvada', videoId: 'vT2GjY_Umpw', descricao: 'Trabalha a espessura das costas.', nivel: 'Intermediário', duracao: '4x 8-12', calorias: '~8 cal/min', grupoMuscular: 'Costas', categoria: 'Musculação' },
   { id: 4, nome: 'Puxada Frontal', videoId: 'c_sEtA9Qj2o', descricao: 'Excelente para a largura das costas (dorsais).', nivel: 'Iniciante', duracao: '3x 10-15', calorias: '~6 cal/min', grupoMuscular: 'Costas', categoria: 'Musculação' },
@@ -176,6 +176,10 @@ export const EXERCICIOS_DATABASE: Exercise[] = [
   { id: 10, nome: 'Tríceps Testa', videoId: 'h-3m_T-NIpE', descricao: 'Excelente para a cabeça longa do tríceps.', nivel: 'Intermediário', duracao: '3x 10-12', calorias: '~5 cal/min', grupoMuscular: 'Tríceps', categoria: 'Musculação' },
   { id: 11, nome: 'Prancha Abdominal', videoId: 'pSHjTRCQxIw', descricao: 'Fortalece o core de forma isométrica.', nivel: 'Iniciante', duracao: '3x 30-60s', calorias: '~3 cal/min', grupoMuscular: 'Abdômen', categoria: 'Funcional' },
   { id: 12, nome: 'Burpees', videoId: 'TU8QYVW0gDU', descricao: 'Exercício de corpo inteiro de alta intensidade.', nivel: 'Avançado', duracao: '3x 10', calorias: '~15 cal/min', grupoMuscular: 'Cardio', categoria: 'Aeróbico' },
+  // Exemplos com URLs diretas (vídeos hospedados)
+  { id: 13, nome: 'Agachamento com Vídeo Direto', videoId: 'demo', videoUrl: 'https://seu-dominio.com/videos/agachamento.mp4', descricao: 'Exemplo de vídeo com URL direta hospedada.', nivel: 'Intermediário', duracao: '4x 12', calorias: '~8 cal/min', grupoMuscular: 'Pernas', categoria: 'Musculação' },
+  { id: 14, nome: 'Flexão com Vídeo do Drive', videoId: 'demo', videoUrl: 'https://drive.google.com/file/d/1ABC123XYZ456/view', descricao: 'Exemplo de vídeo hospedado no Google Drive.', nivel: 'Iniciante', duracao: '3x 15', calorias: '~5 cal/min', grupoMuscular: 'Peito', categoria: 'Funcional' },
+  { id: 15, nome: 'Corrida com Vídeo do Vimeo', videoId: 'demo', videoUrl: 'https://vimeo.com/123456789', descricao: 'Exemplo de vídeo hospedado no Vimeo.', nivel: 'Intermediário', duracao: '20 min', calorias: '~10 cal/min', grupoMuscular: 'Cardio', categoria: 'Aeróbico' },
 ];
 
 export const PROFESSIONALS_DATABASE: Professional[] = [
